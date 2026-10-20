@@ -1,0 +1,171 @@
+rules_version = '2';
+
+// Zubair Developer - Firestore Security Rules
+//
+// Architecture:
+// - Public visitors: READ-ONLY access to published content via the client SDK.
+// - Staff (custom claims set by Admin SDK): scoped READ access for dashboards.
+// - ALL writes (contact forms, leads, admin mutations) go through Next.js
+//   Route Handlers using the Firebase Admin SDK. Admin SDK bypasses these rules,
+//   so every route handler MUST authorize the request itself.
+// - Roles live in Firebase Auth custom claims: { role: "ADMIN", active: true }.
+//   Set them only from trusted server code (see scripts/set-admin-claims.js).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return signedIn() && request.auth.token.keys().hasAny(['role'])
+        ? request.auth.token.role
+        : null;
+    }
+
+    function isActiveStaff() {
+      return signedIn()
+        && request.auth.token.get('active', false) == true
+        && role() in ['SUPER_ADMIN', 'ADMIN', 'EDITOR', 'SALES', 'SUPPORT'];
+    }
+
+    function hasRole(roles) {
+      return isActiveStaff() && role() in roles;
+    }
+
+    function isAdmin() {
+      return hasRole(['SUPER_ADMIN', 'ADMIN']);
+    }
+
+    function canReadContent() {
+      return hasRole(['SUPER_ADMIN', 'ADMIN', 'EDITOR']);
+    }
+
+    function canReadCrm() {
+      return hasRole(['SUPER_ADMIN', 'ADMIN', 'SALES', 'SUPPORT']);
+    }
+
+    function isPublished() {
+      return resource.data.get('status', '') == 'published';
+    }
+
+    // ---------- Public, published content ----------
+    // Public: only published docs. Staff with content access: everything.
+    // Client writes are always denied; mutations happen via server routes.
+
+    match /projects/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /services/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /pricingPlans/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /skills/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /experience/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /testimonials/{id} {
+      // Only approved + published testimonials are public.
+      allow read: if (isPublished() && resource.data.get('approved', false) == true)
+                  || canReadContent();
+      allow write: if false;
+    }
+
+    match /blogPosts/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    match /faqs/{id} {
+      allow read: if isPublished() || canReadContent();
+      allow write: if false;
+    }
+
+    // Public site settings live ONLY in the "public" document
+    // (brand, socials, announcement bar). Everything else is staff-only.
+    match /siteSettings/{docId} {
+      allow read: if docId == 'public' || isAdmin();
+      allow write: if false;
+    }
+
+    // ---------- Private business data ----------
+    // Leads / inquiries are created ONLY by server routes (validation,
+    // spam checks, rate limits). No client create, no public read.
+
+    match /leads/{id} {
+      allow read: if canReadCrm();
+      allow write: if false;
+    }
+
+    match /inquiries/{id} {
+      allow read: if canReadCrm();
+      allow write: if false;
+    }
+
+    match /followUps/{id} {
+      allow read: if canReadCrm();
+      allow write: if false;
+    }
+
+    match /notifications/{id} {
+      allow read: if isActiveStaff();
+      allow write: if false;
+    }
+
+    // ---------- AI ----------
+    // aiKnowledge is retrieved server-side only; never exposed to browsers.
+    match /aiSettings/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /aiKnowledge/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /aiUsage/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------- Admin / audit ----------
+    match /adminUsers/{uid} {
+      // Staff can read their own record; SUPER_ADMIN can read all.
+      allow read: if isActiveStaff()
+                  && (request.auth.uid == uid || hasRole(['SUPER_ADMIN']));
+      allow write: if false;
+    }
+
+    match /activityLogs/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /media/{id} {
+      allow read: if canReadContent();
+      allow write: if false;
+    }
+
+    // ---------- Default deny ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
