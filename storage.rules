@@ -1,38 +1,11 @@
 rules_version = '2';
 
-// Zubair Developer - Storage Rules
-// public/**  : publicly readable images (project covers, blog images, avatars).
-//              Only active EDITOR+ staff can upload, images only, max 5 MB.
-// private/** : no client access at all (server/Admin SDK only).
-
 service firebase.storage {
   match /b/{bucket}/o {
-
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function canUpload() {
-      return signedIn()
-        && request.auth.token.get('active', false) == true
-        && request.auth.token.get('role', '') in ['SUPER_ADMIN', 'ADMIN', 'EDITOR'];
-    }
-
-    function validImage() {
-      return request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/(png|jpeg|webp|avif|gif)');
-    }
-
     match /public/{allPaths=**} {
       allow read: if true;
-      allow create, update: if canUpload() && validImage();
-      allow delete: if canUpload();
+      allow write: if false;
     }
-
-    match /private/{allPaths=**} {
-      allow read, write: if false;
-    }
-
     match /{allPaths=**} {
       allow read, write: if false;
     }
