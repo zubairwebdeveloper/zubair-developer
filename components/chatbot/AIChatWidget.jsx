@@ -67,7 +67,7 @@ export function AIChatWidget({ config, className = "ai-chat-slot" }) {
         aria-hidden={open}
         tabIndex={open ? -1 : undefined}
         onClick={() => toggle(!open)}
-        className={`group fixed right-4 z-50 h-12 gap-2.5 rounded-full bottom-5 px-5 text-sm font-medium shadow-lg shadow-primary/25 ring-1 ring-primary/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:right-6 ${className} ${
+        className={`group fixed right-4 z-50 h-12 gap-2.5 rounded-full md:bottom-5 px-5 text-sm font-medium shadow-lg shadow-primary/25 ring-1 ring-primary/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:right-6 ${className} ${
           open ? "pointer-events-none opacity-0" : ""
         }`}
       >

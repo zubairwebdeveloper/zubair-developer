@@ -4,8 +4,8 @@ import { cache } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 // import { AuthProvider } from "@/components/auth/AuthProvider";
-import { Navbar, SiteHeader } from "@/components/layout/SiteHeader";
-import { Footer, SiteFooter } from "@/components/layout/SiteFooter";
+import {  SiteHeader } from "@/components/layout/SiteHeader";
+import {  SiteFooter } from "@/components/layout/SiteFooter";
 // import { Providers } from "@/components/layout/Providers";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { SiteBackground } from "@/components/layout/SiteBackground";
@@ -96,10 +96,12 @@ function resolveAiChatConfig(settings) {
 /** A valid absolute origin, even if the environment variable is missing or malformed. */
 function resolveSiteUrl() {
   try {
-    return new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
-      .origin;
+    return new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ||
+        "https://zubair-developer.vercel.app/",
+    ).origin;
   } catch {
-    return "http://localhost:3000";
+    return "https://zubair-developer.vercel.app/";
   }
 }
 
@@ -154,7 +156,9 @@ export async function generateMetadata() {
 
   return {
     metadataBase: new URL(siteUrl),
-
+    verification: {
+      google: "googleea8406c0b5f9e455.html",
+    },
     title: {
       default: title,
       template: `%s | ${siteName}`,
