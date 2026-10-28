@@ -16,7 +16,7 @@ import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { siteConfig } from "@/config/site";
 import { settingsService } from "@/services/settingsService";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-
+import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { AIChatWidget } from "@/components/chatbot/AIChatWidget";
 
@@ -267,9 +267,30 @@ export default async function RootLayout({ children }) {
           crossOrigin="anonymous"
         />
         <link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
+        <meta
+          name="google-site-verification"
+          content="bxA3Yq58I9_uS4gB0vEdvm5_fTEICdXWg57TeRNnUQw"
+        />
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZMWPYM012H"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){window.dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-ZMWPYM012H');
+    `,
+          }}
+        />
       </head>
       <body className="relative flex min-h-dvh flex-col overflow-x-clip bg-background font-sans text-[15px] leading-relaxed text-foreground antialiased selection:bg-primary/20 selection:text-foreground sm:text-base lg:text-[17px] dark:selection:bg-primary/30">
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-20 overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-20 overflow-hidden"
+        >
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_34%,transparent_68%,rgba(12,18,32,0.08))] dark:bg-[linear-gradient(to_bottom,rgba(8,12,24,0.22),transparent_38%,transparent_65%,rgba(6,8,15,0.18))]" />
           <div
             className="absolute -left-20 top-0 h-[26rem] w-[26rem] rounded-full opacity-55 blur-3xl animate-pulse"
