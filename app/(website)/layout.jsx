@@ -34,7 +34,6 @@ export default async function WebsiteLayout({ children }) {
       </main>
 
       <ConnectionStatus />
-      <BackToTop />
       <MobileCTA
         quickContact={quickContact}
         quickLabel={quickLabel}

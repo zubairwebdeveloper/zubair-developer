@@ -316,7 +316,7 @@ export default async function RootLayout({ children }) {
             {/* AIChatWidget hides itself on /contact and /hire-me, and renders
                 nothing without a config — it positions itself with its own
                 fixed classes, so no className is needed here. */}
-            <AIChatWidget config={aiChatConfig} />
+            <AIChatWidget config={aiChatConfig} className="ai-chat-slot" />
 
             <ScrollToTop bottom={80} />
 

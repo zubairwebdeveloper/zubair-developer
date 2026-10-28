@@ -815,15 +815,36 @@
     animation: shimmer 1.6s linear infinite;
   }
 
-  /* AI chat widget: sits above the back-to-top button when it is visible. */
+  /* AI chat widget: sits above the back-to-top button when visible, and above
+     the bottom mobile CTA bar on smaller screens. */
   .ai-chat-slot {
+    right: calc(1rem + env(safe-area-inset-right, 0px));
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-    transition: bottom 0.3s ease;
+    transition: right 0.3s ease, bottom 0.3s ease;
   }
 
   html[data-scrolltop="visible"] .ai-chat-slot {
-    /* 24px (scroll button offset) + 44px (button size) + 12px (gap) */
+    /* Keep the chat button clear of the scroll-to-top button. */
+    right: calc(5.5rem + env(safe-area-inset-right, 0px));
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .ai-chat-slot {
+      right: calc(1.5rem + env(safe-area-inset-right, 0px));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .ai-chat-slot {
+      right: calc(1rem + env(safe-area-inset-right, 0px));
+      bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+
+    html[data-scrolltop="visible"] .ai-chat-slot {
+      right: calc(1rem + env(safe-area-inset-right, 0px));
+      bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
