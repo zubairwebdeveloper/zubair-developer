@@ -4,7 +4,8 @@ export const siteConfig = {
     "Full Stack Developer | SaaS Specialist | AI Chatbot Automation Expert",
   description:
     "I help businesses build high-performance websites, scalable web applications, and AI-powered automation systems.",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  url:
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://zubair-developer.vercel.app/",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
   freeDiscoveryCall: false,
 };

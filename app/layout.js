@@ -4,8 +4,8 @@ import { cache } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 // import { AuthProvider } from "@/components/auth/AuthProvider";
-import {  SiteHeader } from "@/components/layout/SiteHeader";
-import {  SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 // import { Providers } from "@/components/layout/Providers";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { SiteBackground } from "@/components/layout/SiteBackground";
@@ -16,10 +16,10 @@ import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { siteConfig } from "@/config/site";
 import { settingsService } from "@/services/settingsService";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { AIChatWidget } from "@/components/chatbot/AIChatWidget";
-
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 // Fonts are loaded with a <link> tag (fetched by the browser at runtime) instead of
 // next/font/google, so the build never has to reach fonts.googleapis.com.
 // globals.css defines --font-dm-sans, --font-space-grotesk and --font-source-serif,
@@ -353,6 +353,8 @@ export default async function RootLayout({ children }) {
             <SnakeScrollAuto />
           </ThemeProvider>
         </div>
+        <Analytics />
+        <SpeedInsights />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
