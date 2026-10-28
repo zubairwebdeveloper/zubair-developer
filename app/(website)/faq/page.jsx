@@ -20,6 +20,7 @@ import { Glossary } from "@/components/faq/Glossary";
 import { ReadinessChecklist } from "@/components/faq/ReadinessChecklist";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Reveal } from "@/components/shared/Reveal";
+import { JsonLd } from "@/components/shared/JsonLd";
 import { Section } from "@/components/shared/Section";
 import { siteConfig } from "@/config/site";
 import { getFaqs } from "@/services/content.service";
@@ -113,14 +114,7 @@ export default async function FaqPage() {
 
   return (
     <>
-      {jsonLd ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      ) : null}
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
 
       <PageHeader
         eyebrow="FAQ"

@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
-import { formatPrice } from "@/lib/utils/format";
+import { formatPrice, formatStartingPrice } from "@/lib/utils/format";
 
 // Features shown before the rest collapse behind "Show all features".
 const VISIBLE_FEATURES = 6;
@@ -52,6 +52,13 @@ export function PlanCard({ plan }) {
   const ctaLabel = plan.ctaLabel ?? "Get started";
 
   return (
+    <div
+      className={cn(
+        "h-full rounded-2xl",
+        featured &&
+          "bg-[linear-gradient(120deg,var(--highlight),var(--violet),var(--highlight))] bg-[length:200%_200%] p-px motion-safe:animate-[gradient-border-rotate_6s_linear_infinite]",
+      )}
+    >
     <Card
       className={cn(
         "group/plan relative h-full overflow-hidden transition-[transform,box-shadow,border-color] duration-300 motion-reduce:transition-none",
@@ -75,13 +82,22 @@ export function PlanCard({ plan }) {
           {featured ? <Badge>{plan.badge}</Badge> : null}
         </div>
 
-        <p className="text-metric flex flex-wrap items-baseline gap-x-1 text-3xl tracking-tight sm:text-4xl">
-          {formatPrice(plan)}
+        <p className="flex flex-col gap-1">
+          {plan.price != null && plan.isStartingPrice ? (
+            <span className="text-xs font-medium text-muted-foreground">
+              Starting from
+            </span>
+          ) : null}
+          <span className="text-metric flex flex-wrap items-baseline gap-x-1 text-3xl tracking-tight sm:text-4xl">
+            {plan.isStartingPrice
+              ? formatStartingPrice(plan)
+              : formatPrice(plan)}
           {suffix ? (
             <span className="text-base font-normal text-muted-foreground">
               {suffix}
             </span>
           ) : null}
+          </span>
         </p>
 
         <CardDescription className="text-pretty leading-relaxed">
@@ -143,7 +159,7 @@ export function PlanCard({ plan }) {
 
       <CardFooter className="mt-auto">
         <Link
-          href={`/hire-me?service=${serviceParam}&plan=${plan.slug}`}
+          href={`/hire-me?plan=${encodeURIComponent(plan.slug)}&service=${serviceParam}`}
           className={cn(
             buttonVariants({ variant: featured ? "default" : "outline" }),
             "group/cta h-auto min-h-9 w-full gap-2 whitespace-normal py-2 text-center",
@@ -158,5 +174,6 @@ export function PlanCard({ plan }) {
         </Link>
       </CardFooter>
     </Card>
+    </div>
   );
 }

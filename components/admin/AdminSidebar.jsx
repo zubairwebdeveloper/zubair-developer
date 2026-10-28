@@ -268,19 +268,25 @@ export function AdminSidebar({ role, collapsed = false, onNavigate }) {
 
   /* Load saved preferences once on the client. */
   useEffect(() => {
-    setFavorites(readList(FAVORITES_KEY));
-    setClosedGroups(readList(CLOSED_GROUPS_KEY));
+    const frame = window.requestAnimationFrame(() => {
+      setFavorites(readList(FAVORITES_KEY));
+      setClosedGroups(readList(CLOSED_GROUPS_KEY));
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   /* Always reveal the group of the page the user is on. */
   useEffect(() => {
     if (!activeGroup) return;
-    setClosedGroups((previous) => {
-      if (!previous.includes(activeGroup)) return previous;
-      const next = previous.filter((name) => name !== activeGroup);
-      writeList(CLOSED_GROUPS_KEY, next);
-      return next;
+    const frame = window.requestAnimationFrame(() => {
+      setClosedGroups((previous) => {
+        if (!previous.includes(activeGroup)) return previous;
+        const next = previous.filter((name) => name !== activeGroup);
+        writeList(CLOSED_GROUPS_KEY, next);
+        return next;
+      });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname, activeGroup]);
 
   /* Keep the active link visible in long lists. */

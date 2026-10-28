@@ -3,7 +3,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/pricing" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/pricing",
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
+}));
+vi.mock("@/components/layout/useHeaderUser", () => ({
+  useHeaderUser: () => ({ user: null, loading: false, signOut: vi.fn() }),
+}));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }) => (
     <a href={href} {...props}>

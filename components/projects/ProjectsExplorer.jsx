@@ -7,6 +7,10 @@ import { ProjectCard } from "@/components/projects/ProjectCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  getProjectCategoryGroups,
+  getProjectCategoryKey,
+} from "@/lib/projects/category";
 import { cn } from "@/lib/utils/cn";
 
 const PAGE_SIZE = 9; // cards shown before "Show more"
@@ -35,26 +39,28 @@ export function ProjectsExplorer({ projects: projectsProp }) {
   const [category, setCategory] = useState("all");
   const [tech, setTech] = useState("all");
   const [sort, setSort] = useState("default");
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [limitState, setLimitState] = useState({
+    filterKey: null,
+    count: PAGE_SIZE,
+  });
   const [showAllTech, setShowAllTech] = useState(false);
   const [ready, setReady] = useState(false);
   const searchRef = useRef(null);
 
   const deferredQuery = useDeferredValue(query);
+  const filterKey = `${deferredQuery}\0${category}\0${tech}\0${sort}`;
+  const limit =
+    limitState.filterKey === filterKey ? limitState.count : PAGE_SIZE;
 
   /* ---------- Derived option lists ---------- */
 
   const categories = useMemo(() => {
-    const counts = new Map();
-    projects.forEach((p) => {
-      if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-    });
     return [
       { value: "all", label: "All", count: projects.length },
-      ...[...counts.entries()].map(([value, count]) => ({
-        value,
-        label: value,
-        count,
+      ...getProjectCategoryGroups(projects).map((group) => ({
+        value: group.key,
+        label: group.label,
+        count: group.count,
       })),
     ];
   }, [projects]);
@@ -85,8 +91,17 @@ export function ProjectsExplorer({ projects: projectsProp }) {
     const t = params.get("tech");
     const s = params.get("sort");
 
+    // URL filters are only available client-side after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setQuery(q);
     if (c && categories.some((item) => item.value === c)) setCategory(c);
+    else if (
+      c &&
+      getProjectCategoryKey(c) &&
+      categories.some((item) => item.value === getProjectCategoryKey(c))
+    ) {
+      setCategory(getProjectCategoryKey(c));
+    }
     if (t && technologies.includes(t)) {
       setTech(t);
       if (technologies.indexOf(t) >= TOP_TECH) setShowAllTech(true);
@@ -119,7 +134,8 @@ export function ProjectsExplorer({ projects: projectsProp }) {
 
     const list = projects.filter((project) => {
       const matchesCategory =
-        category === "all" || project.category === category;
+        category === "all" ||
+        getProjectCategoryKey(project.category) === category;
       const matchesTech =
         tech === "all" || asArray(project.technologies).includes(tech);
       const matchesQuery =
@@ -144,11 +160,6 @@ export function ProjectsExplorer({ projects: projectsProp }) {
     }
     return list;
   }, [projects, deferredQuery, category, tech, sort]);
-
-  // Back to the first page whenever the result set changes
-  useEffect(() => {
-    setLimit(PAGE_SIZE);
-  }, [deferredQuery, category, tech, sort]);
 
   const shown = filtered.slice(0, limit);
   const remaining = filtered.length - shown.length;
@@ -385,7 +396,15 @@ export function ProjectsExplorer({ projects: projectsProp }) {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => setLimit((value) => value + PAGE_SIZE)}
+                onClick={() =>
+                  setLimitState((current) => ({
+                    filterKey,
+                    count:
+                      (current.filterKey === filterKey
+                        ? current.count
+                        : PAGE_SIZE) + PAGE_SIZE,
+                  }))
+                }
               >
                 Show {Math.min(PAGE_SIZE, remaining)} more
                 <span className="text-muted-foreground">

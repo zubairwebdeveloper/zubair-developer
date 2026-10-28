@@ -76,6 +76,7 @@ export default function ChatPanel({ config, open, onClose }) {
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
 
   const abortRef = useRef(null);
+  const panelRef = useRef(null);
   const logRef = useRef(null);
   const inputRef = useRef(null);
   const copyTimerRef = useRef(null);
@@ -94,7 +95,9 @@ export default function ChatPanel({ config, open, onClose }) {
   );
 
   useEffect(() => {
-    if (open && mode === "chat") inputRef.current?.focus();
+    if (!open) return;
+    if (mode === "chat") inputRef.current?.focus();
+    else panelRef.current?.querySelector("button:not(:disabled)")?.focus();
   }, [open, mode]);
 
   useEffect(() => {
@@ -176,6 +179,38 @@ export default function ChatPanel({ config, open, onClose }) {
     setSessionId(crypto.randomUUID());
   }
 
+  function trapFocus(event) {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      onClose();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    const focusable = Array.from(
+      panelRef.current?.querySelectorAll(
+        'a[href], button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    ).filter((element) => element.getClientRects().length > 0);
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      panelRef.current?.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   async function startReview() {
     setPreparing(true);
     setError("");
@@ -212,16 +247,17 @@ export default function ChatPanel({ config, open, onClose }) {
 
   return (
     <div
+      ref={panelRef}
       id="ai-chat-panel"
       role="dialog"
+      aria-modal="true"
       aria-label={`${config.name} chat`}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
-      }}
-      className="fixed right-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4rem)] z-50 flex h-[min(36rem,calc(100svh-7rem))] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-primary/10 sm:right-6 sm:bottom-24 sm:w-[24rem] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200"
+      tabIndex={-1}
+      onKeyDown={trapFocus}
+      className="fixed inset-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden border border-border/70 bg-card/95 shadow-2xl shadow-primary/10 backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in sm:inset-auto sm:right-6 sm:bottom-24 sm:h-[min(36rem,calc(100svh-7rem))] sm:w-[24rem] sm:rounded-2xl motion-safe:sm:slide-in-from-bottom-2 motion-safe:duration-200"
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-b from-primary/10 to-transparent px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur-xl">
         <div className="flex min-w-0 items-center gap-3">
           <span
             aria-hidden="true"
@@ -233,7 +269,9 @@ export default function ChatPanel({ config, open, onClose }) {
             <p className="truncate font-heading text-sm leading-tight font-semibold">
               {config.name}
             </p>
-            <p className="text-xs text-muted-foreground">AI assistant</p>
+            <p className="text-xs text-muted-foreground">
+              AI assistant · replies may be imperfect
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -323,7 +361,7 @@ export default function ChatPanel({ config, open, onClose }) {
           <div
             ref={logRef}
             role="log"
-            aria-live="polite"
+            aria-live="off"
             aria-label="Conversation"
             className="flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-4"
           >

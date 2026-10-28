@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -14,12 +20,13 @@ import {
   TextField,
   TextareaField,
 } from "@/components/forms/shared/fields";
-import { FormError, FormSuccess } from "@/components/forms/shared/FormStatus";
+import { FormError } from "@/components/forms/shared/FormStatus";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,7 +45,7 @@ import { projectBriefSchema } from "@/lib/validations/inquiry.schema";
 const DRAFT_KEY = "project-brief-draft";
 const DRAFT_SAVE_DELAY_MS = 600;
 
-/** Fields that tell you whether the brief is useful. They drive the progress meter. */
+/** Fields that tell whether an in-progress brief should be saved. */
 const KEY_FIELDS = [
   "name",
   "email",
@@ -48,6 +55,25 @@ const KEY_FIELDS = [
   "description",
   "budget",
   "timeline",
+];
+
+const STEPS = [
+  {
+    title: "Project type",
+    fields: ["businessType", "service"],
+  },
+  {
+    title: "Scope and features",
+    fields: ["description"],
+  },
+  {
+    title: "Budget and timeline",
+    fields: ["budget", "timeline"],
+  },
+  {
+    title: "Contact details",
+    fields: ["name", "email", "contactMethod", "consent"],
+  },
 ];
 
 /** Never saved to the draft. */
@@ -140,23 +166,26 @@ function FormSection({ step, title, description, children }) {
   );
 }
 
-function ProgressMeter({ filled, total }) {
-  const percent = Math.round((filled / total) * 100);
+function StepProgress({ step }) {
+  const percent = Math.round(((step + 1) / STEPS.length) * 100);
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>Brief progress</span>
-        <span className="tabular-nums">
-          {filled} of {total} key details
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="font-medium text-foreground">
+          Step {step + 1} of {STEPS.length}: {STEPS[step].title}
+        </span>
+        <span className="text-muted-foreground">
+          {percent}% through
         </span>
       </div>
       <div
-        role="meter"
-        aria-label="Brief progress"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={filled}
+        role="progressbar"
+        aria-label="Project brief progress"
+        aria-valuemin={1}
+        aria-valuemax={STEPS.length}
+        aria-valuenow={step + 1}
+        aria-valuetext={`Step ${step + 1} of ${STEPS.length}: ${STEPS[step].title}`}
         className="h-1.5 w-full overflow-hidden rounded-full bg-border/70"
       >
         <div
@@ -164,6 +193,13 @@ function ProgressMeter({ filled, total }) {
           style={{ width: `${percent}%` }}
         />
       </div>
+      <ol aria-label="Project brief steps" className="sr-only">
+        {STEPS.map((item, index) => (
+          <li key={item.title} aria-current={index === step ? "step" : undefined}>
+            {index + 1}. {item.title}
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -172,14 +208,21 @@ function ProgressMeter({ filled, total }) {
 /*  Form                                                                      */
 /* -------------------------------------------------------------------------- */
 
-export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
+export function ProjectBriefForm({
+  defaultService = "",
+  defaultPlan = "",
+  defaultFeatures = "",
+}) {
   const [submitError, setSubmitError] = useState("");
   const [reference, setReference] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   // One submissionId is sent on every retry so a double send cannot create duplicate inquiries.
   const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
   const errorRef = useRef(null);
+  const stepHeadingRef = useRef(null);
+  const stepValidationRef = useRef(false);
   const draftReady = useRef(false);
 
   // A value from the URL is only used when it is a valid option.
@@ -196,7 +239,7 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
     service: initialService,
     planSlug: defaultPlan,
     description: "",
-    features: "",
+    features: defaultFeatures,
     budget: "",
     timeline: "",
     existingWebsite: "",
@@ -211,15 +254,12 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
     register,
     handleSubmit,
     reset,
+    trigger,
     formState: { isSubmitting, errors },
   } = useForm({ resolver: zodResolver(projectBriefSchema), defaultValues });
 
   const values = useWatch({ control });
 
-  const filled =
-    KEY_FIELDS.filter((key) => hasText(values?.[key])).length +
-    (values?.consent ? 1 : 0);
-  const total = KEY_FIELDS.length + 1; // the key details plus consent
   const hasContent =
     KEY_FIELDS.some((key) => hasText(values?.[key])) ||
     hasText(values?.features) ||
@@ -239,9 +279,12 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
         // A valid service from the URL wins over the saved one.
         service: initialService || draft.service || "",
         planSlug: defaultPlan,
+        features: defaultFeatures || draft.features || "",
         consent: false,
         companyUrl: "",
       });
+      // Restored state is only known after reading sessionStorage on mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRestored(true);
     }
     draftReady.current = true;
@@ -296,6 +339,13 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
   // Names the exact fields that failed, and logs the details for debugging.
   function onInvalid(fieldErrors) {
     console.error("[ProjectBriefForm] validation errors:", fieldErrors);
+    const invalidStep = STEPS.findIndex((step) =>
+      step.fields.some((name) => fieldErrors[name]),
+    );
+    if (invalidStep >= 0) {
+      setCurrentStep(invalidStep);
+      requestAnimationFrame(() => stepHeadingRef.current?.focus());
+    }
     const labels = Object.keys(fieldErrors).map(
       (name) => FIELD_LABELS[name] ?? name,
     );
@@ -304,6 +354,37 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
         ? `Please check: ${labels.join(", ")}.`
         : "Some fields need attention. Check the highlighted fields and try again.",
     );
+  }
+
+  async function goToNextStep() {
+    if (stepValidationRef.current || isSubmitting) return;
+    stepValidationRef.current = true;
+
+    try {
+      const isValid = await trigger(STEPS[currentStep].fields, {
+        shouldFocus: true,
+      });
+      if (!isValid) return;
+
+      setCurrentStep((step) => Math.min(step + 1, STEPS.length - 1));
+      requestAnimationFrame(() => stepHeadingRef.current?.focus());
+    } finally {
+      stepValidationRef.current = false;
+    }
+  }
+
+  function onFormSubmit(event) {
+    event.preventDefault();
+    if (currentStep < STEPS.length - 1) {
+      goToNextStep();
+      return;
+    }
+    handleSubmit(onSubmit, onInvalid)();
+  }
+
+  function goToPreviousStep() {
+    setCurrentStep((step) => Math.max(step - 1, 0));
+    requestAnimationFrame(() => stepHeadingRef.current?.focus());
   }
 
   // Ctrl or Cmd + Enter submits from any field.
@@ -323,6 +404,7 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
     reset(defaultValues);
     setRestored(false);
     setSubmitError("");
+    setCurrentStep(0);
   }
 
   function sendAnother() {
@@ -331,19 +413,64 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
     setReference(null);
     setSubmitError("");
     setSubmitted(false);
+    setCurrentStep(0);
   }
 
   if (submitted) {
     return (
-      <FormSuccess
-        title="Your project brief was submitted."
-        description="Thank you. I will review it and reply using your preferred contact method."
-        reference={reference}
+      <Card
+        role="status"
+        aria-live="polite"
+        className="gap-0 rounded-2xl border-success/35 shadow-sm"
       >
-        <Button type="button" variant="outline" onClick={sendAnother}>
-          Submit another brief
-        </Button>
-      </FormSuccess>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-card-title">
+            <CheckCircle2 aria-hidden="true" className="size-5 text-success" />
+            Your project brief was submitted.
+          </CardTitle>
+          <CardDescription className="leading-relaxed">
+            Thank you. I will review the details and reply using your preferred
+            contact method.
+          </CardDescription>
+          {reference ? (
+            <p className="text-sm text-muted-foreground">
+              Reference: <span className="font-mono">{reference}</span>
+            </p>
+          ) : null}
+        </CardHeader>
+        <CardContent>
+          <section aria-labelledby="brief-next-title">
+            <h3 id="brief-next-title" className="text-sm font-semibold">
+              What happens next
+            </h3>
+            <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                "I review your brief.",
+                "I may contact you with clarifying questions.",
+                "We discuss scope and a written proposal.",
+              ].map((step, index) => (
+                <li
+                  key={step}
+                  className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm leading-6"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                  >
+                    {index + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </CardContent>
+        <CardFooter className="border-t border-border/70 pt-5">
+          <Button type="button" variant="outline" onClick={sendAnother}>
+            Submit another brief
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
 
@@ -366,205 +493,249 @@ export function ProjectBriefForm({ defaultService = "", defaultPlan = "" }) {
           </p>
         ) : null}
 
-        <ProgressMeter filled={filled} total={total} />
+        <StepProgress step={currentStep} />
       </CardHeader>
 
-      <CardContent>
-        {restored ? (
-          <div
-            role="status"
-            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3 text-sm"
-          >
-            <p className="text-muted-foreground">
-              We restored the brief you were working on in this tab.
-            </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={startOver}
-              className={focusRing}
+      <form
+        onSubmit={onFormSubmit}
+        onKeyDown={onKeyDown}
+        noValidate
+        aria-busy={isSubmitting}
+        className="relative"
+      >
+        <CardContent className="gap-6">
+          {restored ? (
+            <div
+              role="status"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3 text-sm"
             >
-              Start over
-            </Button>
-          </div>
-        ) : null}
+              <p className="text-muted-foreground">
+                We restored the brief you were working on in this tab.
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={startOver}
+                className={focusRing}
+              >
+                Start over
+              </Button>
+            </div>
+          ) : null}
 
-        <form
-          onSubmit={handleSubmit(onSubmit, onInvalid)}
-          onKeyDown={onKeyDown}
-          noValidate
-          aria-busy={isSubmitting}
-          className="relative flex flex-col gap-6"
-        >
           <input type="hidden" {...register("planSlug")} />
+          <HoneypotField register={register} />
 
-          <FormSection step={1} title="About you">
-            <FieldGroup>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <TextField
-                  control={control}
-                  name="name"
-                  label="Name"
-                  autoComplete="name"
-                />
-                <TextField
-                  control={control}
-                  name="email"
-                  label="Email"
-                  type="email"
-                  autoComplete="email"
-                />
-              </div>
-              <SelectField
-                control={control}
-                name="contactMethod"
-                label="Preferred contact method"
-                options={contactMethodOptions}
-                placeholder="Choose a method"
-              />
-            </FieldGroup>
-          </FormSection>
+          <section aria-labelledby="current-step-title">
+            <h3
+              id="current-step-title"
+              ref={stepHeadingRef}
+              tabIndex={-1}
+              className="mb-5 text-base font-semibold tracking-tight outline-none"
+            >
+              Step {currentStep + 1}: {STEPS[currentStep].title}
+            </h3>
 
-          <FormSection
-            step={2}
-            title="Your project"
-            description="What you want built and what it should achieve."
-          >
-            <FieldGroup>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <TextField
-                  control={control}
-                  name="businessType"
-                  label="Business type"
-                  description="e.g. restaurant, clinic, online store"
-                />
-                <SelectField
-                  control={control}
-                  name="service"
-                  label="Service needed"
-                  options={serviceCategoryOptions}
-                  placeholder="Choose a service"
-                />
-              </div>
-              <TextareaField
-                control={control}
-                name="description"
-                label="Project description"
-                rows={6}
-                description={`What do you want to build and what should it achieve? ${
-                  (values?.description ?? "").length
-                } characters so far.`}
-              />
-              <TextareaField
-                control={control}
-                name="features"
-                label="Required features (optional)"
-                rows={3}
-                description="Pages, integrations, or tools you already know you need."
-              />
-            </FieldGroup>
-          </FormSection>
+            {currentStep === 0 ? (
+              <FormSection
+                step={1}
+                title="Project type"
+                description="Choose the closest service and tell me what kind of business or project this is."
+              >
+                <FieldGroup>
+                  <TextField
+                    control={control}
+                    name="businessType"
+                    label="Business or project type"
+                    description="e.g. restaurant, clinic, online store"
+                  />
+                  <SelectField
+                    control={control}
+                    name="service"
+                    label="Project type"
+                    options={serviceCategoryOptions}
+                    placeholder="Choose a service"
+                  />
+                </FieldGroup>
+              </FormSection>
+            ) : null}
 
-          <FormSection
-            step={3}
-            title="Budget and timeline"
-            description="A range is enough. It helps me suggest a realistic approach."
-          >
-            <FieldGroup>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <SelectField
-                  control={control}
-                  name="budget"
-                  label="Budget range"
-                  options={budgetOptions}
-                  placeholder="Choose a range"
-                />
-                <SelectField
-                  control={control}
-                  name="timeline"
-                  label="Timeline"
-                  options={timelineOptions}
-                  placeholder="Choose a timeline"
-                />
-              </div>
-            </FieldGroup>
-          </FormSection>
+            {currentStep === 1 ? (
+              <FormSection
+                step={2}
+                title="Scope and features"
+                description="Describe what you want to build and how it should help."
+              >
+                <FieldGroup>
+                  <TextareaField
+                    control={control}
+                    name="description"
+                    label="Project description"
+                    rows={6}
+                    description={`What do you want to build and what should it achieve? ${
+                      (values?.description ?? "").length
+                    } characters so far.`}
+                  />
+                  <TextareaField
+                    control={control}
+                    name="features"
+                    label="Required features (optional)"
+                    rows={3}
+                    description="Pages, integrations, or tools you already know you need."
+                  />
+                  <TextField
+                    control={control}
+                    name="existingWebsite"
+                    label="Existing website (optional)"
+                    type="url"
+                    placeholder="https://"
+                  />
+                  <TextareaField
+                    control={control}
+                    name="referenceLinks"
+                    label="Reference links (optional)"
+                    rows={2}
+                    description="Sites or examples you like."
+                  />
+                </FieldGroup>
+              </FormSection>
+            ) : null}
 
-          <FormSection step={4} title="References">
-            <FieldGroup>
-              <TextField
-                control={control}
-                name="existingWebsite"
-                label="Existing website (optional)"
-                type="url"
-                placeholder="https://"
-              />
-              <TextareaField
-                control={control}
-                name="referenceLinks"
-                label="Reference links (optional)"
-                rows={2}
-                description="Sites or examples you like."
-              />
-            </FieldGroup>
-          </FormSection>
-
-          <FormSection step={5} title="Consent">
-            <FieldGroup>
-              <CheckboxField
-                control={control}
-                name="consent"
-                label="I agree to share these details so I can be contacted about my project."
-              />
-              <HoneypotField register={register} />
-
-              {/* planSlug and companyUrl have no visible input to highlight. */}
-              {hasHiddenFieldError ? (
-                <FormError message="Something went wrong with this form. Please reload the page and try again." />
-              ) : null}
-
-              <div ref={errorRef}>
-                <FormError message={submitError} />
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0 sm:w-auto"
-                >
-                  {isSubmitting ? (
-                    <Loader2
-                      aria-hidden="true"
-                      className="animate-spin motion-reduce:animate-none"
+            {currentStep === 2 ? (
+              <FormSection
+                step={3}
+                title="Budget and timeline"
+                description="A range is enough. It helps me suggest a realistic approach."
+              >
+                <FieldGroup>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <SelectField
+                      control={control}
+                      name="budget"
+                      label="Budget range"
+                      options={budgetOptions}
+                      placeholder="Choose a range"
                     />
-                  ) : (
-                    <Send aria-hidden="true" />
-                  )}
-                  {isSubmitting ? "Submitting…" : "Submit project brief"}
-                </Button>
+                    <SelectField
+                      control={control}
+                      name="timeline"
+                      label="Timeline"
+                      options={timelineOptions}
+                      placeholder="Choose a timeline"
+                    />
+                  </div>
+                </FieldGroup>
+              </FormSection>
+            ) : null}
 
-                <p className="text-xs leading-5 text-muted-foreground sm:max-w-[16rem] sm:text-right">
-                  Your details are only used to reply to your brief. Press Ctrl
-                  or ⌘ + Enter to submit. See the{" "}
-                  <Link
-                    href="/privacy"
-                    className={cn(
-                      "rounded-sm font-medium text-foreground underline underline-offset-4 hover:text-primary",
-                      focusRing,
-                    )}
-                  >
-                    Privacy Policy
-                  </Link>
-                  .
-                </p>
-              </div>
-            </FieldGroup>
-          </FormSection>
-        </form>
-      </CardContent>
+            {currentStep === 3 ? (
+              <FormSection
+                step={4}
+                title="Contact details"
+                description="Tell me where to send a reply."
+              >
+                <FieldGroup>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <TextField
+                      control={control}
+                      name="name"
+                      label="Name"
+                      autoComplete="name"
+                    />
+                    <TextField
+                      control={control}
+                      name="email"
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                    />
+                  </div>
+                  <SelectField
+                    control={control}
+                    name="contactMethod"
+                    label="Preferred contact method"
+                    options={contactMethodOptions}
+                    placeholder="Choose a method"
+                  />
+                  <CheckboxField
+                    control={control}
+                    name="consent"
+                    label="I agree to share these details so I can be contacted about my project."
+                  />
+                  {hasHiddenFieldError ? (
+                    <FormError message="Something went wrong with this form. Please reload the page and try again." />
+                  ) : null}
+                </FieldGroup>
+              </FormSection>
+            ) : null}
+          </section>
+        </CardContent>
+
+        <CardFooter className="flex-col items-stretch gap-4 border-t border-border/70 pt-5">
+          <div ref={errorRef}>
+            <FormError message={submitError} />
+          </div>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-2">
+              {currentStep > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goToPreviousStep}
+                  className="gap-2"
+                >
+                  <ArrowLeft aria-hidden="true" className="size-4" />
+                  Back
+                </Button>
+              ) : null}
+            </div>
+
+            {currentStep < STEPS.length - 1 ? (
+              <Button
+                type="button"
+                size="lg"
+                onClick={goToNextStep}
+                className="gap-2"
+              >
+                Continue
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                className="gap-2"
+              >
+                {isSubmitting ? (
+                  <Loader2
+                    aria-hidden="true"
+                    className="animate-spin motion-reduce:animate-none"
+                  />
+                ) : (
+                  <Send aria-hidden="true" />
+                )}
+                {isSubmitting ? "Submitting…" : "Submit project brief"}
+              </Button>
+            )}
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground sm:text-right">
+            Your details are only used to reply to your brief. Press Ctrl or ⌘ +
+            Enter to submit. See the{" "}
+            <Link
+              href="/privacy"
+              className={cn(
+                "rounded-sm font-medium text-foreground underline underline-offset-4 hover:text-primary",
+                focusRing,
+              )}
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </CardFooter>
+      </form>
     </Card>
   );
 }

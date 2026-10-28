@@ -257,71 +257,118 @@ export default async function AboutPage() {
               className="grid scroll-mt-28 gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14"
             >
               <Reveal>
-                <div className="flex max-w-prose flex-col gap-5">
-                  <TypedHeadline
-                    text={typedText}
-                    className="min-h-7 font-heading text-lg font-medium text-primary"
+                <div className="relative flex max-w-prose flex-col gap-5 rounded-[2rem] border border-border/70 bg-card/80 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-7">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 rounded-[2rem] opacity-90"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 42%, color-mix(in srgb, var(--violet) 12%, transparent))",
+                    }}
                   />
 
-                  <h2 className="text-section-title">
-                    Building digital products that move businesses forward
-                  </h2>
+                  <div className="relative flex flex-col gap-4">
+                    <TypedHeadline
+                      text={typedText}
+                      className="min-h-7 font-heading text-lg font-medium text-primary"
+                    />
 
-                  {bio ? (
-                    <p className="max-w-[68ch] whitespace-pre-line text-base leading-relaxed text-muted-foreground">
-                      {bio}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-base leading-relaxed text-muted-foreground">
-                        I am a full stack web developer. I help businesses build
-                        high-performance websites, scalable web applications and
-                        AI-powered automation systems.
-                      </p>
-                      <p className="text-base leading-relaxed text-muted-foreground">
-                        My focus is on practical solutions: clear scope, honest
-                        starting prices and direct communication from the first
-                        message to handover.
-                      </p>
-                    </>
-                  )}
-
-                  {socials ? (
-                    <div className="flex flex-col gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Find me online
-                      </p>
-                      <SocialRow socials={socials} />
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        "Websites",
+                        "SaaS apps",
+                        "Chatbots",
+                        "Automation",
+                      ].map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+                        >
+                          {item}
+                        </span>
+                      ))}
                     </div>
-                  ) : null}
 
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <Link
-                      href="/contact"
-                      className={cn(
-                        buttonVariants({ size: "lg" }),
-                        "group gap-2 motion-safe:active:scale-[0.98]",
-                      )}
-                    >
-                      Discuss Your Project
-                      <ArrowRight
-                        aria-hidden="true"
-                        className="size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
-                      />
-                    </Link>
-                    <Link
-                      href="/projects"
-                      className={cn(
-                        buttonVariants({ size: "lg", variant: "outline" }),
-                        "group gap-2 motion-safe:active:scale-[0.98]",
-                      )}
-                    >
-                      View Projects
-                      <ArrowRight
-                        aria-hidden="true"
-                        className="size-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 motion-reduce:transition-none"
-                      />
-                    </Link>
+                    <h2 className="text-section-title leading-tight">
+                      Building digital products that move businesses forward
+                    </h2>
+
+                    {bio ? (
+                      <p className="max-w-[68ch] whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+                        {bio}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-base leading-relaxed text-muted-foreground">
+                          I am a full stack web developer. I help businesses build
+                          high-performance websites, scalable web applications and
+                          AI-powered automation systems.
+                        </p>
+                        <p className="text-base leading-relaxed text-muted-foreground">
+                          My focus is on practical solutions: clear scope, honest
+                          starting prices and direct communication from the first
+                          message to handover.
+                        </p>
+                      </>
+                    )}
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {[
+                        { label: "Scope", value: "Clear" },
+                        { label: "Pricing", value: "Honest" },
+                        { label: "Delivery", value: "Direct" },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          className="rounded-2xl border border-border/70 bg-background/70 p-3 shadow-sm"
+                        >
+                          <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                            {item.label}
+                          </div>
+                          <div className="mt-2 text-base font-semibold text-foreground">
+                            {item.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {socials ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Find me online
+                        </p>
+                        <SocialRow socials={socials} />
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <Link
+                        href="/contact"
+                        className={cn(
+                          buttonVariants({ size: "lg" }),
+                          "group gap-2 motion-safe:active:scale-[0.98]",
+                        )}
+                      >
+                        Discuss Your Project
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                        />
+                      </Link>
+                      <Link
+                        href="/projects"
+                        className={cn(
+                          buttonVariants({ size: "lg", variant: "outline" }),
+                          "group gap-2 motion-safe:active:scale-[0.98]",
+                        )}
+                      >
+                        View Projects
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="size-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 motion-reduce:transition-none"
+                        />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </Reveal>
@@ -402,6 +449,37 @@ export default async function AboutPage() {
             </div>
           </Section>
         </div>
+
+        <Section className="pt-2 md:pt-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Websites + SaaS",
+                text: "Fast, clear interfaces with the backend and product logic behind them.",
+              },
+              {
+                title: "AI + chatbots",
+                text: "Helpful front-door automation that captures leads and keeps replies moving.",
+              },
+              {
+                title: "Ongoing support",
+                text: "A smooth handoff and a clear next step when the build is launched.",
+              },
+            ].map((item, index) => (
+              <Reveal key={item.title} delay={index * 0.06}>
+                <div className="group h-full rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                  <div className="mb-3 inline-flex rounded-full border border-border/70 bg-primary/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
+                    {index + 1}
+                  </div>
+                  <h3 className="text-card-title text-foreground">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {item.text}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </Section>
 
         <AboutNav items={navItems} />
 

@@ -15,7 +15,13 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import {
   Command,
@@ -90,6 +96,9 @@ const iconTileClass =
   "transition-colors duration-200 motion-reduce:transition-none";
 
 const isExternal = (href) => /^https?:\/\//i.test(href);
+const subscribeClientReady = () => () => {};
+const getClientReady = () => true;
+const getServerNotReady = () => false;
 
 function isCurrentPage(pathname, href) {
   if (!pathname || isExternal(href)) return false;
@@ -137,13 +146,15 @@ export function CommandPalette({ items = defaultItems }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [recent, setRecent] = useState([]);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeClientReady,
+    getClientReady,
+    getServerNotReady,
+  );
   const [feedback, setFeedback] = useState({ id: null, status: "idle" }); // idle | copied | error
   const feedbackTimer = useRef(null);
 
   const email = siteConfig?.contact?.email ?? siteConfig?.email ?? null;
-
-  useEffect(() => setMounted(true), []);
 
   // Ctrl or Cmd + K toggles the palette. A custom event can open it from a button.
   useEffect(() => {
@@ -165,17 +176,21 @@ export function CommandPalette({ items = defaultItems }) {
 
   // Load recent pages when opening; reset search and feedback when closing.
   useEffect(() => {
-    if (open) {
-      setRecent(readRecent());
-    } else {
-      setSearch("");
-      setFeedback({ id: null, status: "idle" });
-    }
+    const frame = window.requestAnimationFrame(() => {
+      if (open) {
+        setRecent(readRecent());
+      } else {
+        setSearch("");
+        setFeedback({ id: null, status: "idle" });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   // Close after any navigation, including back/forward.
   useEffect(() => {
-    setOpen(false);
+    const frame = window.requestAnimationFrame(() => setOpen(false));
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   useEffect(() => () => clearTimeout(feedbackTimer.current), []);

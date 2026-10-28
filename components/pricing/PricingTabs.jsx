@@ -8,7 +8,7 @@ import { PlanCard } from "@/components/pricing/PlanCard";
 import { buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils/cn";
-import { formatPrice } from "@/lib/utils/format";
+import { formatStartingPrice, formatPrice } from "@/lib/utils/format";
 
 // `shortLabel` mobile par dikhta hai, `blurb` panel ke upar. Edit ya remove kar sakte ho.
 const categories = [
@@ -37,6 +37,7 @@ const SORT_OPTIONS = [
 ];
 
 const BILLING_SUFFIX = { monthly: "/month", yearly: "/year" };
+const BILLING_LABELS = { "one-time": "One-time", monthly: "Monthly", yearly: "Yearly" };
 
 const CARD_GAP = 16; // gap-4 in px (mobile carousel)
 
@@ -176,6 +177,7 @@ function PlanGrid({ plans }) {
 export function PricingTabs({ plans }) {
   const allPlans = useMemo(() => (Array.isArray(plans) ? plans : []), [plans]);
   const [sort, setSort] = useState("default");
+  const [billingByCategory, setBillingByCategory] = useState({});
 
   // Group once instead of filtering inside render for every tab.
   const grouped = useMemo(
@@ -212,12 +214,11 @@ export function PricingTabs({ plans }) {
     return () => window.removeEventListener("hashchange", sync);
   }, [visibleCategories]);
 
-  // Keep the active tab valid if the data changes underneath it.
-  useEffect(() => {
-    if (!visibleCategories.some((category) => category.value === active)) {
-      setActive(visibleCategories[0].value);
-    }
-  }, [active, visibleCategories]);
+  const activeCategory = visibleCategories.some(
+    (category) => category.value === active,
+  )
+    ? active
+    : visibleCategories[0].value;
 
   const handleChange = useCallback((value) => {
     setActive(value);
@@ -240,7 +241,7 @@ export function PricingTabs({ plans }) {
       `}</style>
 
       <Tabs
-        value={active}
+        value={activeCategory}
         onValueChange={handleChange}
         orientation="horizontal"
         className="flex w-full min-w-0 flex-col gap-8"
@@ -285,14 +286,28 @@ export function PricingTabs({ plans }) {
         </TabsList>
         {visibleCategories.map((category) => {
           const categoryPlans = grouped[category.value];
-          const pricedPlans = categoryPlans.filter(hasNumericPrice);
+          const billingOptions = [
+            ...new Set(
+              categoryPlans
+                .map((plan) => plan.billing)
+                .filter((billing) => typeof billing === "string" && billing),
+            ),
+          ];
+          const activeBilling =
+            billingOptions.length > 1
+              ? billingByCategory[category.value] ?? billingOptions[0]
+              : null;
+          const billingPlans = activeBilling
+            ? categoryPlans.filter((plan) => plan.billing === activeBilling)
+            : categoryPlans;
+          const pricedPlans = billingPlans.filter(hasNumericPrice);
           const cheapest = pricedPlans.length
             ? pricedPlans.reduce((min, plan) =>
                 plan.price < min.price ? plan : min,
               )
             : null;
           const sortable = pricedPlans.length >= 2;
-          const sorted = sortPlans(categoryPlans, sort);
+          const sorted = sortPlans(billingPlans, sort);
 
           return (
             <TabsContent
@@ -300,7 +315,7 @@ export function PricingTabs({ plans }) {
               value={category.value}
               className="flex min-w-0 flex-col my-6 gap-6 outline-none"
             >
-              <div className="flex flex-col gap-4 my-12 sm:flex-row sm:items-end sm:justify-between">
+              <div className="my-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="flex max-w-prose flex-col gap-2 text-center sm:text-left">
                   {category.blurb ? (
                     <p className="text-pretty text-sm text-muted-foreground sm:text-base">
@@ -309,7 +324,10 @@ export function PricingTabs({ plans }) {
                   ) : null}
                   {cheapest ? (
                     <p className="text-sm font-medium text-foreground">
-                      Starting from {formatPrice(cheapest)}
+                      Starting from{" "}
+                      {cheapest.isStartingPrice
+                        ? formatStartingPrice(cheapest)
+                        : formatPrice(cheapest)}
                       {BILLING_SUFFIX[cheapest.billing] ? (
                         <span className="font-normal text-muted-foreground">
                           {" "}
@@ -319,6 +337,36 @@ export function PricingTabs({ plans }) {
                     </p>
                   ) : null}
                 </div>
+
+                {billingOptions.length > 1 ? (
+                  <div
+                    role="group"
+                    aria-label={`Billing frequency for ${category.label}`}
+                    className="flex flex-wrap items-center justify-center gap-2 sm:justify-end"
+                  >
+                    {billingOptions.map((billing) => (
+                      <button
+                        key={billing}
+                        type="button"
+                        aria-pressed={activeBilling === billing}
+                        onClick={() =>
+                          setBillingByCategory((current) => ({
+                            ...current,
+                            [category.value]: billing,
+                          }))
+                        }
+                        className={cn(
+                          "min-h-9 rounded-full border px-3.5 py-1.5 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                          activeBilling === billing
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                        )}
+                      >
+                        {BILLING_LABELS[billing] ?? billing}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
 
                 {sortable ? (
                   <div

@@ -73,21 +73,23 @@ function CaseStudyBlock({ id, number, title, children }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-28">
       <Reveal>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="text-metric inline-flex h-9 min-w-11 items-center justify-center rounded-lg bg-primary/10 px-2.5 text-sm text-brand ring-1 ring-inset ring-primary/20"
-            >
-              {String(number).padStart(2, "0")}
-            </span>
-            <h2 id={`${id}-title`} className="text-card-title text-foreground">
-              {title}
-            </h2>
+        <div className="rounded-[1.5rem] border border-border bg-card/80 p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="text-metric inline-flex h-9 min-w-11 items-center justify-center rounded-lg bg-primary/10 px-2.5 text-sm text-brand ring-1 ring-inset ring-primary/20"
+              >
+                {String(number).padStart(2, "0")}
+              </span>
+              <h2 id={`${id}-title`} className="text-card-title text-foreground">
+                {title}
+              </h2>
+            </div>
+            <div className="max-w-prose whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+              {children}
+            </div>
           </div>
-          <p className="max-w-prose whitespace-pre-line text-base leading-relaxed text-muted-foreground">
-            {children}
-          </p>
         </div>
       </Reveal>
     </section>
@@ -129,10 +131,19 @@ export default async function ProjectDetailPage({ params }) {
   const related = rankRelated(project, all);
 
   const sections = [
-    { id: "challenge", title: "Challenge", body: project.problem },
+    { id: "problem", title: "Problem", body: project.problem },
     { id: "solution", title: "Solution", body: project.solution },
-    { id: "outcome", title: "Outcome", body: project.outcome },
-  ].filter((item) => Boolean(item.body));
+    ...(project.technologies?.length
+      ? [
+          {
+            id: "stack",
+            title: "Stack",
+            technologies: project.technologies,
+          },
+        ]
+      : []),
+    { id: "result", title: "Result", body: project.outcome },
+  ].filter((item) => Boolean(item.body || item.technologies?.length));
 
   const currentIndex = all.findIndex((item) => item.slug === project.slug);
   const prevProject = currentIndex > 0 ? all[currentIndex - 1] : null;
@@ -152,12 +163,35 @@ export default async function ProjectDetailPage({ params }) {
         description={project.summary}
       />
 
-      <Section>
+      <Section className="pt-0">
+        {project.coverImage ? (
+          <Reveal className="mb-10 sm:mb-14">
+            <div className="relative aspect-video overflow-hidden rounded-[2rem] border border-border bg-muted shadow-soft">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-grid-subtle opacity-60"
+              />
+              <Image
+                src={project.coverImage}
+                alt={project.coverAlt || project.title}
+                fill
+                sizes="(min-width: 1280px) 1200px, (min-width: 768px) 100vw, 100vw"
+                className="object-cover transition-transform duration-500 motion-safe:hover:scale-[1.02]"
+                priority
+              />
+            </div>
+          </Reveal>
+        ) : null}
+
         <div className="grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14">
           {/* Sidebar: sticky on desktop, stacked above content on mobile */}
           <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
-            <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="relative flex flex-col gap-5 overflow-hidden rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/10 blur-3xl"
+              />
+              <h2 className="relative text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 At a glance
               </h2>
 
@@ -227,28 +261,16 @@ export default async function ProjectDetailPage({ params }) {
 
             {sections.length > 1 ? (
               <CaseStudyNav
-                items={sections.map(({ id, title }) => ({ id, title }))}
+                sections={sections.map(({ id, title }) => ({
+                  id,
+                  label: title,
+                }))}
               />
             ) : null}
           </aside>
 
           {/* Main content */}
           <div className="flex min-w-0 flex-col gap-12 sm:gap-14">
-            {project.coverImage ? (
-              <Reveal>
-                <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
-                  <Image
-                    src={project.coverImage}
-                    alt={project.coverAlt || project.title}
-                    fill
-                    sizes="(min-width: 1024px) 840px, 100vw"
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-              </Reveal>
-            ) : null}
-
             {sections.map((item, index) => (
               <CaseStudyBlock
                 key={item.id}
@@ -256,13 +278,29 @@ export default async function ProjectDetailPage({ params }) {
                 number={index + 1}
                 title={item.title}
               >
-                {item.body}
+                {item.technologies ? (
+                  <ul aria-label="Technology stack" className="flex flex-wrap gap-2">
+                    {item.technologies.map((technology) => (
+                      <li
+                        key={technology}
+                        className="rounded-full border border-border bg-muted px-3 py-1.5 text-sm font-medium text-foreground"
+                      >
+                        {technology}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  item.body
+                )}
               </CaseStudyBlock>
             ))}
 
             {/* Closing call to action */}
             <Reveal>
-              <div className="flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-6 sm:p-8">
+              <div className="flex flex-col items-start gap-4 rounded-[1.75rem] border border-border bg-card p-6 shadow-soft sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Next step
+                </p>
                 <h2 className="text-card-title text-foreground">
                   Have a similar project in mind?
                 </h2>
@@ -271,7 +309,7 @@ export default async function ProjectDetailPage({ params }) {
                   can talk through the next step.
                 </p>
                 <Link
-                  href="/contact"
+                  href="/hire-me"
                   className={`${linkButtonBase} bg-primary text-primary-foreground hover:opacity-90`}
                 >
                   Discuss Your Project

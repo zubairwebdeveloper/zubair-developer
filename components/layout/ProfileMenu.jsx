@@ -5,6 +5,7 @@ import {
   Check,
   Copy,
   Laptop,
+  LayoutDashboard,
   Loader2,
   LogOut,
   Moon,
@@ -91,7 +92,12 @@ function Avatar({ user, className, textClass = "text-xs" }) {
  * @param {Array<{ label: string, href: string, icon?: React.ElementType }>} [links]
  * @param {() => (void | Promise<void>)} [onSignOut]
  */
-export function ProfileMenu({ user, links = [], onSignOut }) {
+export function ProfileMenu({
+  user,
+  links = [],
+  onSignOut,
+  canAccessDashboard = false,
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -103,17 +109,24 @@ export function ProfileMenu({ user, links = [], onSignOut }) {
   const copyTimer = useRef(null);
 
   useEffect(() => {
-    setMounted(true);
-    if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
-      setShortcut("⌘K");
-    }
+    const frame = window.requestAnimationFrame(() => {
+      setMounted(true);
+      if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
+        setShortcut("⌘K");
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => () => clearTimeout(copyTimer.current), []);
 
   // Reset the copy feedback whenever the menu closes.
   useEffect(() => {
-    if (!open) setCopyStatus("idle");
+    if (!open) {
+      const frame = window.requestAnimationFrame(() => setCopyStatus("idle"));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    return undefined;
   }, [open]);
 
   if (!user) return null;
@@ -190,6 +203,29 @@ export function ProfileMenu({ user, links = [], onSignOut }) {
         </div>
 
         <div className="p-1.5">
+          {canAccessDashboard ? (
+            <>
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={() => router.push("/admin")}
+                  className={itemClass}
+                >
+                  <LayoutDashboard
+                    aria-hidden="true"
+                    className="size-4 text-primary"
+                  />
+                  <span className="flex-1">Admin dashboard</span>
+                  {isActivePath(pathname, "/admin") ? (
+                    <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                      Current
+                    </span>
+                  ) : null}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+            </>
+          ) : null}
+
           {links.length > 0 ? (
             <>
               <DropdownMenuGroup>

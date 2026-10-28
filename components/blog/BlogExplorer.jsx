@@ -18,6 +18,18 @@ const SORTS = [
   { id: "oldest", label: "Oldest first" },
 ];
 
+function getPostTags(posts) {
+  return [
+    ...new Set(
+      posts.flatMap((post) =>
+        Array.isArray(post.tags)
+          ? post.tags.filter((tag) => typeof tag === "string" && tag.trim())
+          : [],
+      ),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+}
+
 function toTime(value) {
   const time = new Date(value).getTime();
   return Number.isNaN(time) ? 0 : time;
@@ -31,25 +43,40 @@ export function BlogExplorer({ posts }) {
   const reduce = useReducedMotion();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
+  const [selectedTag, setSelectedTag] = useState("all");
+  const tags = useMemo(() => getPostTags(posts), [posts]);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const filtered = needle
-      ? posts.filter((post) =>
-          `${post.title ?? ""} ${post.excerpt ?? ""}`
-            .toLowerCase()
-            .includes(needle),
-        )
-      : posts;
+    const filtered = posts.filter((post) => {
+      const postTags = Array.isArray(post.tags)
+        ? post.tags.filter((tag) => typeof tag === "string")
+        : [];
+      const matchesQuery =
+        !needle ||
+        `${post.title ?? ""} ${post.excerpt ?? ""} ${postTags.join(" ")}`
+          .toLowerCase()
+          .includes(needle);
+      const matchesTag =
+        selectedTag === "all" ||
+        postTags.some(
+          (tag) => tag.toLowerCase() === selectedTag.toLowerCase(),
+        );
+      return matchesQuery && matchesTag;
+    });
 
     return [...filtered].sort((a, b) =>
       sort === "newest"
         ? toTime(b.publishedAt) - toTime(a.publishedAt)
         : toTime(a.publishedAt) - toTime(b.publishedAt),
     );
-  }, [posts, query, sort]);
+  }, [posts, query, selectedTag, sort]);
 
   const hasQuery = query.trim().length > 0;
+  const filters = [
+    { id: "all", label: "All articles" },
+    ...tags.map((tag) => ({ id: tag, label: tag })),
+  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -124,15 +151,44 @@ export function BlogExplorer({ posts }) {
         </div>
       </div>
 
+      {tags.length > 0 ? (
+        <div
+          role="group"
+          aria-label="Filter articles by topic"
+          className="flex flex-wrap gap-2"
+        >
+          {filters.map((filter) => {
+            const selected =
+              filter.id.toLowerCase() === selectedTag.toLowerCase();
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setSelectedTag(filter.id)}
+                className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${
+                  selected
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {/* Result count (screen readers ko bhi announce hota hai) */}
       <p
         className="text-muted-foreground text-sm"
         role="status"
         aria-live="polite"
       >
-        {hasQuery
-          ? `${results.length} of ${posts.length} ${posts.length === 1 ? "article" : "articles"} match “${query.trim()}”`
-          : `${posts.length} ${posts.length === 1 ? "article" : "articles"}`}
+        {results.length} of {posts.length}{" "}
+        {posts.length === 1 ? "article" : "articles"}
+        {hasQuery ? ` match “${query.trim()}”` : ""}
+        {selectedTag !== "all" ? ` in ${selectedTag}` : ""}
       </p>
 
       {/* Grid */}
@@ -173,15 +229,19 @@ export function BlogExplorer({ posts }) {
             No matching articles
           </h2>
           <p className="text-muted-foreground max-w-sm text-sm leading-6">
-            Nothing matches “{query.trim()}”. Try a different word or clear the
-            search.
+            {hasQuery || selectedTag !== "all"
+              ? "Try another search or topic, or reset the filters to see every published article."
+              : "There are no published articles to show yet."}
           </p>
           <button
             type="button"
-            onClick={() => setQuery("")}
+            onClick={() => {
+              setQuery("");
+              setSelectedTag("all");
+            }}
             className="border-border bg-background hover:bg-muted focus-visible:ring-ring mt-1 inline-flex min-h-10 items-center rounded-lg border px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
           >
-            Clear search
+            Clear filters
           </button>
         </div>
       )}

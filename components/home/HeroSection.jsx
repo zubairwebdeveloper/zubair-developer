@@ -1,221 +1,285 @@
-import { ArrowRight, Bot, Check, Code2, Globe, Layers } from "lucide-react";
+import { ArrowRight, Code2 } from "lucide-react";
 import Link from "next/link";
 
+import { AnimatedHeadline } from "@/components/home/AnimatedHeadline";
 import { HeroVisual } from "@/components/home/HeroVisual";
-import { Container } from "@/components/shared/Container";
+import { HeroAvailability } from "@/components/home/hero/HeroAvailability";
+import { HeroProofStrip } from "@/components/home/hero/HeroProofStrip";
+import { HeroScrollCue } from "@/components/home/hero/HeroScrollCue";
+import { HeroServicePaths } from "@/components/home/hero/HeroServicePaths";
+import { RotatingWords } from "@/components/home/RotatingWords";
+import { CopyEmailButton } from "@/components/layout/CopyEmailButton";
+import { Magnetic } from "@/components/motion/Magnetic";
 import { Reveal } from "@/components/shared/Reveal";
+import { Container } from "@/components/shared/Container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { primaryCta } from "@/config/site";
+import { primaryCta, siteConfig } from "@/config/site";
+import {
+  buildServicePaths,
+  BUILD_WORDS,
+  resolveDescription,
+  resolveHeadline,
+  splitHeadline,
+} from "@/lib/hero/hero-content";
+import { SocialRow } from "@/lib/profile/public-profile";
 import { cn } from "@/lib/utils/cn";
 
-/** The promises from your original line, shown as separate points. */
-const trustPoints = [
-  "Clear scope",
-  "Transparent starting prices",
-  "Direct communication",
-];
-
 /**
- * Edit this list to the technologies you actually offer to clients.
- * Also doubles as the content for the floating chips around the visual
- * below, so each entry only needs to live in one place.
+ * Home hero. Optional profile and published service/pricing data preserve the
+ * existing CMS props while allowing truthful, data-backed service cards.
  */
-const technologies = ["Next.js", "React", "Firebase", "Tailwind CSS"];
+export function HeroSection({
+  headline,
+  bio,
+  availability,
+  email,
+  socials,
+  services = [],
+  plans = [],
+  stats,
+}) {
+  const resolvedHeadline = resolveHeadline({ headline });
+  const description = resolveDescription({ bio, headline });
+  const { lead, accent } = splitHeadline(resolvedHeadline);
+  const paths = buildServicePaths({ services, plans });
 
-/** Where each floating chip sits relative to the visual's square frame. */
-const chipPlacement = [
-  "-top-3 left-2 lg:-left-4",
-  "top-10 -right-2 lg:-right-10",
-  "bottom-12 -left-3 lg:-left-10",
-  "-bottom-3 right-4 lg:right-0",
-];
-
-/** Worded from the hero paragraph. Edit to match your services. */
-const focusAreas = [
-  {
-    icon: Globe,
-    title: "High-performance websites",
-    description: "Fast, responsive sites built to represent your business.",
-  },
-  {
-    icon: Layers,
-    title: "Scalable web applications",
-    description: "SaaS products and web apps designed to grow with you.",
-  },
-  {
-    icon: Bot,
-    title: "AI-powered automation",
-    description: "Chatbots and automation that handle repeat work.",
-  },
-];
-
-const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-
-const pressFeedback = "motion-safe:active:scale-[0.98]";
-
-export function HeroSection() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="overflow-hidden py-14 md:py-24"
+      className="relative isolate overflow-x-clip pt-10 pb-12 sm:pt-14 md:py-20"
     >
-      <Container className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
-        <Reveal className="flex flex-col items-start gap-6">
-          <Badge
-            variant="secondary"
-            className="gap-1.5 font-normal normal-case tracking-normal"
-          >
-            <Code2 aria-hidden="true" className="size-3.5" />
-            Full-stack development, SaaS &amp; AI automation
-          </Badge>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-grid-subtle bg-noise [mask-image:radial-gradient(ellipse_at_top,black_35%,transparent_78%)]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-32 -top-20 -z-10 size-[min(34rem,90vw)] rounded-full opacity-25 blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 36%, transparent), transparent 68%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-[18%] top-[24%] -z-10 size-72 rounded-full opacity-15 blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in srgb, var(--violet) 28%, transparent), transparent 70%)",
+        }}
+      />
 
-          <h1 id="hero-title" className="text-hero text-balance">
-            Building Digital Products That{" "}
-            <span className="text-primary">Move Businesses Forward.</span>
-          </h1>
+      <Container className="grid min-w-0 items-center gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
+        <div className="flex min-w-0 flex-col items-start gap-4 sm:gap-5">
+          <div className="flex max-w-full flex-wrap items-center gap-2">
+            <Badge
+              variant="secondary"
+              aria-label="Full Stack Web Developer, SaaS Developer, and Chatbot Automation Developer"
+              className="max-w-full gap-1.5 whitespace-normal font-normal normal-case tracking-normal"
+            >
+              <Code2 aria-hidden="true" className="size-3.5 shrink-0" />
+              <span className="sm:hidden">
+                Full Stack · Chatbots · Automation
+              </span>
+              <span className="hidden sm:inline">
+                Full Stack Developer · SaaS · Chatbot Automation
+              </span>
+            </Badge>
+            <HeroAvailability availability={availability} />
+          </div>
 
-          <p className="text-body-lg max-w-xl text-pretty text-muted-foreground">
-            I help businesses build high-performance websites, scalable web
-            applications, and AI-powered automation systems that turn ideas into
-            practical digital solutions.
+          <div className="group relative w-full max-w-xl overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/85 p-4 shadow-[0_18px_60px_rgba(17,24,39,0.08)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_80px_rgba(17,24,39,0.12)] sm:p-5">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-90"
+              style={{
+                background:
+                  "linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, transparent), transparent 38%, color-mix(in srgb, var(--violet) 18%, transparent))",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-primary/10 blur-3xl transition-transform duration-500 group-hover:scale-110"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-8 left-1/3 size-28 rounded-full bg-violet/10 blur-3xl transition-transform duration-700 group-hover:translate-y-[-6px]"
+            />
+
+            <div className="relative flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-foreground/90">
+                  <span className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)] animate-pulse" />
+                  <span className="truncate">Available for projects</span>
+                </span>
+                <span className="rounded-full border border-border/70 bg-muted/60 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Web + Chatbots
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                    Zubair Developer
+                  </p>
+                  <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                    Digital products that turn interest into action.
+                  </h2>
+                </div>
+                <div className="hidden shrink-0 rounded-2xl border border-border/80 bg-background/80 p-2 shadow-sm sm:block">
+                  <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                    <span className="size-2 rounded-full bg-primary" />
+                    Live build
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "Web", detail: "Sites + SaaS" },
+                  { label: "Backend", detail: "APIs + auth" },
+                  { label: "Automation", detail: "Chatbots + flows" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="group/item relative overflow-hidden rounded-2xl border border-border/70 bg-background/60 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background/80"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-70" />
+                    <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                      {item.label}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-foreground">
+                      {item.detail}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {"Direct communication".split(" ").map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-border/70 bg-background/70 px-2.5 py-1"
+                  >
+                    {chip}
+                  </span>
+                ))}
+                {"Clear pricing".split(" ").map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-border/70 bg-background/70 px-2.5 py-1"
+                  >
+                    {chip}
+                  </span>
+                ))}
+                <span className="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">
+                  Discovery-first
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/70 p-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Next priority
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Build, launch, and refine without the chaos.
+                  </p>
+                </div>
+                <Link
+                  href="/hire-me"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/8 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-primary/12 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  Start now
+                  <ArrowRight aria-hidden="true" className="size-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <AnimatedHeadline
+            id="hero-title"
+            lead={lead}
+            accent={accent}
+            visibleFirst
+          />
+
+          <p className="flex min-h-[3em] w-full flex-wrap items-baseline gap-x-2 font-heading text-lg font-medium tracking-tight text-foreground sm:min-h-[1.5em] sm:text-xl">
+            <span className="shrink-0">I build</span>
+            <RotatingWords
+              words={BUILD_WORDS}
+              reserveWidth
+              className="text-highlight"
+            />
           </p>
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-            <Link
-              href={primaryCta.href}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "group w-full gap-2 sm:w-auto",
-                pressFeedback,
-                focusRing,
-              )}
-            >
-              {primaryCta.label}
-              <ArrowRight
-                aria-hidden="true"
-                className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-              />
-            </Link>
+          <p className="text-body-lg max-w-xl whitespace-pre-line text-pretty leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+
+          <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+            <Magnetic strength={5} className="w-full sm:w-auto">
+              <Link
+                href={primaryCta.href}
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "focus-ring group w-full gap-2 sm:w-auto motion-safe:active:scale-[0.98]",
+                )}
+              >
+                {primaryCta.label}
+                <ArrowRight
+                  aria-hidden="true"
+                  className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                />
+              </Link>
+            </Magnetic>
             <Link
               href="/projects"
               className={cn(
                 buttonVariants({ size: "lg", variant: "outline" }),
-                "w-full sm:w-auto",
-                pressFeedback,
-                focusRing,
+                "focus-ring w-full sm:w-auto motion-safe:active:scale-[0.98]",
               )}
             >
-              Explore My Work
+              See My Work
+            </Link>
+            <Link
+              href="#chatbot-demo"
+              className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline sm:w-auto"
+            >
+              Watch the chatbot demo
+              <ArrowRight aria-hidden="true" className="size-3.5" />
             </Link>
           </div>
 
-          <Link
-            href="/process"
-            className={cn(
-              "group inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground",
-              focusRing,
-            )}
-          >
-            See how a project works
-            <ArrowRight
-              aria-hidden="true"
-              className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-            />
-          </Link>
+          <HeroServicePaths paths={paths} />
 
-          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            {trustPoints.map((point) => (
-              <li key={point} className="flex items-center gap-2">
-                <Check
-                  aria-hidden="true"
-                  className="size-4 shrink-0 text-primary"
-                />
-                {point}
-              </li>
-            ))}
-          </ul>
+          <HeroProofStrip siteConfig={siteConfig} stats={stats} />
 
-          <div className="flex flex-col gap-2 border-t border-border/60 pt-5">
-            <p className="text-sm text-muted-foreground">
-              Technologies I work with
-            </p>
-            <ul className="flex flex-wrap gap-2">
-              {technologies.map((tech) => (
-                <li
-                  key={tech}
-                  className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"
-                >
-                  {tech}
-                </li>
-              ))}
-            </ul>
+          {email || socials ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/60 pt-3 text-sm text-muted-foreground">
+              {socials ? <SocialRow socials={socials} /> : null}
+              {email ? <CopyEmailButton email={email} /> : null}
+            </div>
+          ) : null}
+
+          <HeroScrollCue />
+        </div>
+
+        <Reveal
+          delay={0.12}
+          className="relative flex min-w-0 justify-center lg:pl-2"
+        >
+          <div className="w-full max-w-md">
+            <HeroVisual />
           </div>
         </Reveal>
-
-        {/* Visual: the 3D scene stays the centerpiece; the chips are a quiet,
-            desktop-only frame around it, not a second competing element. */}
-        <Reveal delay={0.12} className="relative flex justify-center">
-          <HeroVisual />
-          <ul
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden lg:block"
-          >
-            {technologies.map((tech, index) => (
-              <li
-                key={tech}
-                style={{ animationDelay: `${480 + index * 110}ms` }}
-                className={cn(
-                  "absolute rounded-full border border-border bg-card/90 px-2.5 py-1 font-mono text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:fill-mode-both motion-safe:duration-500",
-                  chipPlacement[index],
-                )}
-              >
-                {tech}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
       </Container>
 
-      <Container className="mt-12 md:mt-16">
-        <h2 className="sr-only">What I build</h2>
-        <ul className="grid gap-4 md:grid-cols-3">
-          {focusAreas.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.title} className="grid">
-                <Reveal delay={0.1 + index * 0.06}>
-                  <article className="group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/40 hover:shadow-md focus-within:ring-2 focus-within:ring-ring motion-safe:hover:-translate-y-0.5">
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/20"
-                    >
-                      <Icon className="size-5" />
-                    </span>
-                    <h3 className="text-card-title text-foreground">
-                      {/* Stretched link: whole card clickable, one tab stop. */}
-                      <Link
-                        href="/services"
-                        className="focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
-                      >
-                        {item.title}
-                      </Link>
-                    </h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {item.description}
-                    </p>
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="mt-auto size-4 text-primary transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-                    />
-                  </article>
-                </Reveal>
-              </li>
-            );
-          })}
-        </ul>
-      </Container>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-background/70"
+      />
     </section>
   );
 }

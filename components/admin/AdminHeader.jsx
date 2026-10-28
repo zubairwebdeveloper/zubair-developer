@@ -145,7 +145,8 @@ function useDisclosureMenu() {
   const panelId = useId();
 
   useEffect(() => {
-    setOpen(false);
+    const frame = window.requestAnimationFrame(() => setOpen(false));
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   useEffect(() => {
@@ -326,7 +327,11 @@ function AccountMenu({ admin }) {
 
   // Greeting uses the visitor's local time, so it is resolved on the client.
   useEffect(() => {
-    if (open) setGreeting(getGreeting(new Date().getHours()));
+    if (!open) return undefined;
+    const frame = window.requestAnimationFrame(() =>
+      setGreeting(getGreeting(new Date().getHours())),
+    );
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   async function copyEmail() {
@@ -576,8 +581,10 @@ export function AdminHeader({
 
   // Connection status: admin actions fail silently offline, so say so.
   useEffect(() => {
-    setOnline(navigator.onLine);
-    wasOffline.current = !navigator.onLine;
+    const frame = window.requestAnimationFrame(() => {
+      setOnline(navigator.onLine);
+      wasOffline.current = !navigator.onLine;
+    });
 
     const goOnline = () => {
       setOnline(true);
@@ -597,6 +604,7 @@ export function AdminHeader({
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
     return () => {
+      window.cancelAnimationFrame(frame);
       clearTimeout(reconnectTimer.current);
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
@@ -605,7 +613,8 @@ export function AdminHeader({
 
   // "Updated at" time: set on every page load and after each manual refresh.
   useEffect(() => {
-    setLastUpdated(new Date());
+    const frame = window.requestAnimationFrame(() => setLastUpdated(new Date()));
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   useEffect(() => {
@@ -615,11 +624,16 @@ export function AdminHeader({
 
   // Fullscreen is not supported everywhere (for example iPhone Safari).
   useEffect(() => {
-    setCanFullscreen(Boolean(document.fullscreenEnabled));
     const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    sync();
+    const frame = window.requestAnimationFrame(() => {
+      setCanFullscreen(Boolean(document.fullscreenEnabled));
+      sync();
+    });
     document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("fullscreenchange", sync);
+    };
   }, []);
 
   // Cmd/Ctrl + B toggles the desktop sidebar.

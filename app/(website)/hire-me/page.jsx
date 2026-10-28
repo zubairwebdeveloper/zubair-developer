@@ -21,6 +21,18 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Reveal } from "@/components/shared/Reveal";
 import { Section } from "@/components/shared/Section";
 import { siteConfig } from "@/config/site";
+import { getValues, serviceCategoryOptions } from "@/constants/options";
+import {
+  getPublicProfile,
+  SocialRow,
+} from "@/lib/profile/public-profile";
+import {
+  getEstimateTiers,
+  getPublishedAddOns,
+  PROJECT_SIZES,
+} from "@/lib/pricing/estimate";
+import { getPlans } from "@/services/pricing.service";
+import { getSiteSettings } from "@/services/settingsService";
 
 export const metadata = {
   title: "Start a Project",
@@ -105,23 +117,114 @@ const faqs = [
   },
 ];
 
-/** URL se aaya value safe label banata hai (React text ko khud escape karta hai). */
-function toLabel(value) {
-  if (typeof value !== "string") return "";
-  return value.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+const SERVICE_BY_TYPE = {
+  web: "web-development",
+  chatbot: "chatbot-automation",
+};
+
+const TYPE_BY_SERVICE = {
+  "web-development": "web",
+  "chatbot-automation": "chatbot",
+};
+
+const CATEGORY_BY_TYPE = {
+  web: "web",
+  chatbot: "automation",
+};
+
+function firstString(value) {
+  return typeof value === "string" ? value : "";
 }
 
 export default async function HireMePage({ searchParams }) {
-  const { service = "", plan = "" } = await searchParams;
+  const params = (await searchParams) ?? {};
+  const rawService = firstString(params.service);
+  const rawPlan = firstString(params.plan);
+  const rawType = firstString(params.type);
+  const rawSize = firstString(params.size);
+  const rawAddOns = (
+    Array.isArray(params.addons) ? params.addons : [params.addons]
+  )
+    .filter((value) => typeof value === "string")
+    .slice(0, 3);
+  const plans = await getPlans();
   const email = siteConfig.contactEmail;
+  const settings = await getSiteSettings();
+  const profile = settings?.profile;
+  const configuredSocials = profile?.socials;
+  const hasConfiguredSocials =
+    configuredSocials &&
+    typeof configuredSocials === "object" &&
+    Object.values(configuredSocials).some((value) =>
+      typeof value === "string" ? value.trim() : Boolean(value?.url || value?.href),
+    );
+  const socials = hasConfiguredSocials
+    ? getPublicProfile(settings).socials?.filter((social) => social.id !== "email")
+    : null;
 
-  const serviceValue = typeof service === "string" ? service : "";
-  const planValue = typeof plan === "string" ? plan : "";
-  const serviceLabel = toLabel(serviceValue);
-  const planLabel = toLabel(planValue);
+  const validServices = getValues(serviceCategoryOptions);
+  const requestedService = validServices.includes(rawService)
+    ? rawService
+    : "";
+  const requestedPlan = plans.find((plan) => plan.slug === rawPlan) ?? null;
+  const inferredType = requestedService
+    ? (TYPE_BY_SERVICE[requestedService] ?? "")
+    : requestedPlan?.category === "web"
+      ? "web"
+      : requestedPlan?.category === "automation"
+        ? "chatbot"
+        : "";
+  const projectType =
+    (rawType === "web" || rawType === "chatbot") && !requestedService
+      ? rawType
+      : inferredType;
+  const category = CATEGORY_BY_TYPE[projectType];
+  const requestedSize = PROJECT_SIZES.some((item) => item.value === rawSize)
+    ? rawSize
+    : "";
+  const sizeIndex = PROJECT_SIZES.findIndex(
+    (item) => item.value === requestedSize,
+  );
+  const orderedPlans = getEstimateTiers(plans, projectType);
+  const planFromSize = sizeIndex >= 0 ? orderedPlans[sizeIndex] : null;
+  const selectedPlan =
+    planFromSize ??
+    (requestedPlan?.category === category ? requestedPlan : null);
+  const serviceValue =
+    requestedService || SERVICE_BY_TYPE[projectType] || "";
+  const defaultPlan = selectedPlan?.slug ?? "";
+  const allowedAddOns = new Set(getPublishedAddOns(plans, projectType));
+  const selectedAddOns = [
+    ...new Set(
+      rawAddOns
+        .flatMap((value) => value.split(","))
+        .map((item) => item.trim())
+        .filter((item) => allowedAddOns.has(item)),
+    ),
+  ].slice(0, 3);
+  const selectedSize = PROJECT_SIZES.find(
+    (item) => item.value === requestedSize,
+  );
+  const defaultFeatures = [
+    selectedSize ? `Estimator size: ${selectedSize.label}` : "",
+    selectedAddOns.length
+      ? `Additional requests to discuss: ${selectedAddOns.join(", ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const serviceLabel =
+    serviceCategoryOptions.find((option) => option.value === serviceValue)
+      ?.label ?? "";
+  const planLabel = selectedPlan?.name ?? "";
   const selection = [
     serviceLabel && { label: "Service", value: serviceLabel },
     planLabel && { label: "Plan", value: planLabel },
+    selectedSize && { label: "Size", value: selectedSize.label },
+    selectedAddOns.length && {
+      label: "Requested add-ons",
+      value: selectedAddOns.join(", "),
+    },
   ].filter(Boolean);
 
   return (
@@ -130,6 +233,11 @@ export default async function HireMePage({ searchParams }) {
         eyebrow="Start a project"
         title="Tell me about your project"
         description="The more detail you share, the more useful my reply will be."
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Start a project" },
+        ]}
+        action={{ label: "Go to project brief", href: "#brief-form" }}
       />
 
       {/* 1. Form + sidebar */}
@@ -173,7 +281,8 @@ export default async function HireMePage({ searchParams }) {
               <div className="border-border min-w-0 border-t pt-6">
                 <ProjectBriefForm
                   defaultService={serviceValue}
-                  defaultPlan={planValue}
+                  defaultPlan={defaultPlan}
+                  defaultFeatures={defaultFeatures}
                 />
               </div>
             </div>
@@ -223,6 +332,14 @@ export default async function HireMePage({ searchParams }) {
                   <div>
                     <CopyEmailButton email={email} />
                   </div>
+                </div>
+              </Reveal>
+            ) : null}
+            {socials?.length ? (
+              <Reveal direction="up" className="min-w-0">
+                <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-5 sm:p-6">
+                  <h2 className="text-card-title">Other contact channels</h2>
+                  <SocialRow socials={socials} variant="list" />
                 </div>
               </Reveal>
             ) : null}

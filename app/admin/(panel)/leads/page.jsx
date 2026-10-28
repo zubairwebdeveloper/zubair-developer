@@ -88,14 +88,15 @@ export default async function LeadsPage({ searchParams }) {
         title="Leads"
         description="Project briefs submitted from the website."
         actions={
-          // Plain <a>: Link is API route ko prefetch kar sakta hai, download ko nahi.
-          <a
+          <Link
             href="/api/admin/leads/export/"
+            prefetch={false}
+            download
             className={buttonVariants({ variant: "outline" })}
           >
             <Download aria-hidden="true" className="size-4" />
             Export CSV
-          </a>
+          </Link>
         }
       />
 

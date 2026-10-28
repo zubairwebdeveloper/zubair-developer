@@ -70,7 +70,9 @@ export function ConfirmDialog({
 
   // Start fresh every time the dialog closes.
   useEffect(() => {
-    if (!open) setTyped("");
+    if (open) return undefined;
+    const frame = window.requestAnimationFrame(() => setTyped(""));
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   const needsText = Boolean(requireText);

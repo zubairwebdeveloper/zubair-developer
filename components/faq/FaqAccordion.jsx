@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 
@@ -120,15 +120,16 @@ export function FaqAccordion({
 
   // Open a question straight from a link such as /faq#faq-123.
   useEffect(() => {
-    const hash = decodeURIComponent(window.location.hash.slice(1));
-    if (!hash.startsWith("faq-")) return;
-    const id = hash.slice(4);
-    if (!faqs.some((faq) => String(faq.id) === id)) return;
+    const frame = window.requestAnimationFrame(() => {
+      const hash = decodeURIComponent(window.location.hash.slice(1));
+      if (!hash.startsWith("faq-")) return;
+      const id = hash.slice(4);
+      if (!faqs.some((faq) => String(faq.id) === id)) return;
 
-    setOpen(id);
-    requestAnimationFrame(() => {
+      setOpen(id);
       document.getElementById(hash)?.scrollIntoView({ block: "start" });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [faqs]);
 
   function changeQuery(next) {
@@ -246,9 +247,12 @@ export function FaqAccordion({
               </Button>
             ) : null}
             {showCta ? (
-              <Button>
-                <NextLink href={contactHref}>Ask your question</NextLink>
-              </Button>
+              <NextLink
+                href={contactHref}
+                className={buttonVariants({ variant: "default" })}
+              >
+                Ask your question
+              </NextLink>
             ) : null}
           </div>
         </div>
@@ -287,9 +291,15 @@ export function FaqAccordion({
               Tell me about your project and I will reply to your email.
             </p>
           </div>
-          <Button size="lg" className="w-full sm:w-auto">
-            <NextLink href={contactHref}>Discuss your project</NextLink>
-          </Button>
+          <NextLink
+            href={contactHref}
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "w-full sm:w-auto",
+            )}
+          >
+            Discuss your project
+          </NextLink>
         </div>
       ) : null}
     </div>

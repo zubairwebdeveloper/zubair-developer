@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
-import { LegalToc } from "@/components/legal/LegalToc";
-import { PrintButton } from "@/components/legal/PrintButton";
+import { PolicyLayout } from "@/components/legal/PolicyLayout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Reveal } from "@/components/shared/Reveal";
 import { Section } from "@/components/shared/Section";
@@ -93,93 +92,55 @@ const TERMS_SECTIONS = [
 ];
 
 export default function TermsPage() {
-  const tocItems = TERMS_SECTIONS.map(({ id, title }) => ({ id, title }));
+  const sections = TERMS_SECTIONS.map(({ id, title, paragraphs }) => ({
+    id,
+    title,
+    blocks: paragraphs.map((text) => ({ type: "p", text })),
+  }));
 
   return (
     <>
-      <PageHeader eyebrow="Legal" title="Terms of Service" />
+      <PageHeader
+        eyebrow="Legal"
+        title="Terms of Service"
+        description="The terms that apply to this website and to project work agreed through a written proposal."
+      />
 
       <Section>
-        <div className="grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14">
-          <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start print:hidden">
-            <LegalToc items={tocItems} />
-            <PrintButton />
-          </aside>
-
-          <div className="flex min-w-0 max-w-3xl flex-col gap-10 sm:gap-12">
-            {SHOW_DRAFT_NOTICE ? (
-              <div
-                role="note"
-                className="rounded-2xl border border-border bg-muted/50 p-4 text-sm leading-relaxed text-muted-foreground"
-              >
-                This is a starter draft and must be reviewed before publication.
-              </div>
-            ) : null}
-
-            {LAST_UPDATED ? (
-              <p className="text-sm text-muted-foreground">
-                Last updated: {LAST_UPDATED}
-              </p>
-            ) : null}
-
-            {TERMS_SECTIONS.map((section, index) => (
-              <section
-                key={section.id}
-                id={section.id}
-                aria-labelledby={`${section.id}-title`}
-                className="scroll-mt-28"
-              >
-                <Reveal>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="text-metric inline-flex h-9 min-w-11 items-center justify-center rounded-lg bg-primary/10 px-2.5 text-sm text-brand ring-1 ring-inset ring-primary/20"
-                      >
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <h2
-                        id={`${section.id}-title`}
-                        className="text-card-title text-foreground"
-                      >
-                        {section.title}
-                      </h2>
-                    </div>
-                    <div className="flex max-w-prose flex-col gap-3">
-                      {section.paragraphs.map((text) => (
-                        <p
-                          key={text}
-                          className="text-base leading-relaxed text-muted-foreground"
-                        >
-                          {text}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </Reveal>
-              </section>
-            ))}
-
-            <Reveal>
-              <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 sm:p-8 print:hidden">
-                <h2 className="text-card-title text-foreground">
-                  Questions about these terms?
-                </h2>
-                <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-                  If anything here is unclear, ask before you start a project.
-                  It is easier to settle it up front.
-                </p>
-                <Link
-                  href="/contact"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:active:scale-[0.98]"
-                >
-                  Contact Me
-                  <FiArrowRight aria-hidden="true" className="size-4" />
-                </Link>
-              </div>
-            </Reveal>
-          </div>
+        <div className="mx-auto max-w-6xl">
+          <PolicyLayout
+            sections={sections}
+            lastUpdated={LAST_UPDATED}
+            showDraftNotes={false}
+            showDataRequest={false}
+            draftNote={
+              SHOW_DRAFT_NOTICE
+                ? "This is a starter draft and must be reviewed before publication."
+                : ""
+            }
+          />
         </div>
+      </Section>
+
+      <Section>
+        <Reveal>
+          <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 sm:p-8 print:hidden">
+            <h2 className="text-card-title text-foreground">
+              Questions about these terms?
+            </h2>
+            <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+              If anything here is unclear, ask before you start a project. It is
+              easier to settle it up front.
+            </p>
+            <Link
+              href="/contact"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:active:scale-[0.98]"
+            >
+              Contact Me
+              <FiArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          </div>
+        </Reveal>
       </Section>
     </>
   );

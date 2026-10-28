@@ -1,13 +1,15 @@
 // components/home/ServicesOverview.jsx
+// Redesigned: TiltCard hover, gradient borders, Stagger reveals, soft layered cards.
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+import { Stagger } from "@/components/motion/Stagger";
 import { Reveal } from "@/components/shared/Reveal";
 import { Section } from "@/components/shared/Section";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/cn";
 import { getServices } from "@/services/services.service";
 
 export async function ServicesOverview() {
@@ -16,33 +18,29 @@ export async function ServicesOverview() {
 
   return (
     <Section id="services" className="relative isolate overflow-hidden">
-      {/* Decorative accent glow (non-interactive) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      {/* Decorative glow */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 left-1/2 h-72 w-[min(56rem,90vw)] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
       <SectionHeading
         eyebrow="Services"
-        title="Web development and automation, built for real businesses"
-        description="Two focused offerings, each with clear deliverables and a transparent starting point."
+        title="Web development and chatbot automation."
+        description="Two focused offerings with clear deliverables, published starting prices, or a custom quote when scope needs discussion."
       />
 
       {hasServices ? (
-        <ul className="mt-10 grid gap-5 sm:mt-12 md:grid-cols-2 md:gap-6">
-          {services.map((service, index) => (
-            <li
-              key={service.slug ?? service.title}
-              className="grid [&>*]:h-full"
-            >
-              <Reveal delay={index * 0.06}>
-                <ServiceCard service={service} />
-              </Reveal>
+        <Stagger
+          className="mt-10 grid gap-5 sm:mt-12 md:grid-cols-2 md:gap-6"
+          as="ul"
+          staggerDelay={0.07}
+        >
+          {services.map((service) => (
+            <li key={service.slug ?? service.title} className="grid [&>*]:h-full">
+              <ServiceCard service={service} />
             </li>
           ))}
-        </ul>
+        </Stagger>
       ) : (
         <div
           role="status"
@@ -52,8 +50,8 @@ export async function ServicesOverview() {
             Services are being updated
           </h3>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The service details are not available right now. Tell me what you
-            need and I will reply with a clear plan and quote.
+            The service details are not available right now. Tell me what you need and I will
+            reply with a clear plan and quote.
           </p>
           <Link href="/hire-me" className={buttonVariants({ size: "lg" })}>
             Discuss your project
@@ -66,14 +64,14 @@ export async function ServicesOverview() {
         <Reveal delay={0.12}>
           <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/70 bg-muted/40 p-5 sm:mt-10 sm:flex-row sm:items-center sm:p-6">
             <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Not sure which service fits? Describe your project and I will
-              suggest the right starting point.
+              Not sure which service fits? Describe your project and I will suggest the right
+              starting point.
             </p>
             <Link
               href="/hire-me"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "group w-full shrink-0 sm:w-auto",
+                "group w-full shrink-0 gap-2 sm:w-auto",
               )}
             >
               Discuss your project

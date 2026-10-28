@@ -42,6 +42,21 @@ const FAQ_ITEMS = [
   },
 ];
 
+const PROCESS_HIGHLIGHTS = [
+  {
+    title: "Full stack build",
+    copy: "Marketing sites, SaaS products, dashboards, and internal tools built to scale without messy handoffs.",
+  },
+  {
+    title: "AI & chat flows",
+    copy: "Instagram DM, Messenger, and website AI flows that capture leads and answer common questions automatically.",
+  },
+  {
+    title: "Support after launch",
+    copy: "Ongoing improvements, bug fixes, and updates so the project keeps working as your business changes.",
+  },
+];
+
 function prettyLabel(value) {
   return String(value)
     .replace(/[-_]+/g, " ")
@@ -68,11 +83,52 @@ export default async function ServicesPage() {
     <>
       <PageHeader
         eyebrow="Services"
-        title="What I can build for your business"
-        description="Web development and AI-powered automation with clear deliverables."
+        title="Web products and automation built to grow the work you do"
+        description="From polished websites to internal tools and chatbot flows, I build the pieces that help your business get found, convert, and stay organized."
       />
 
+      <Section className="pt-0">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-card/80 p-5 shadow-soft sm:p-8">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-grid-subtle opacity-60"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-16 top-0 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-12 bottom-0 h-44 w-44 rounded-full bg-violet/10 blur-3xl"
+            />
+
+            <div className="relative grid gap-4 lg:grid-cols-3">
+              {PROCESS_HIGHLIGHTS.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-border bg-background/70 p-5 shadow-sm transition-transform duration-300 motion-safe:hover:-translate-y-1"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {item.title}
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {item.copy}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </Section>
+
       <Section>
+        <div className="mb-8 flex flex-col gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Explore the work
+          </p>
+          <h2 className="text-section-title">Which service fits your next step?</h2>
+        </div>
         <ServicesExplorer items={items} categories={categories} />
       </Section>
 
@@ -87,7 +143,7 @@ export default async function ServicesPage() {
             </div>
           </Reveal>
 
-          <Reveal delay={0.06}>
+          <Reveal delay={0.06} className="min-w-0 overflow-x-clip">
             <div
               role="region"
               aria-label="Services comparison table, scrollable"
@@ -167,6 +223,66 @@ export default async function ServicesPage() {
       ) : null}
 
       <ProcessSection />
+
+      <Section className="bg-muted/40">
+        <Reveal>
+          <div className="mb-8 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                How projects usually work
+              </p>
+              <h2 className="mt-2 text-section-title">A simple path from brief to launch</h2>
+            </div>
+            <Link
+              href="/hire-me"
+              className="inline-flex items-center gap-2 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Start a project
+              <FiArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          </div>
+        </Reveal>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              step: "01",
+              label: "Discovery",
+              text: "We clarify the business goal, user journey, and what needs to be built or automated.",
+            },
+            {
+              step: "02",
+              label: "Scope & quote",
+              text: "You get a clear recommendation, deliverables, and a realistic starting price before work begins.",
+            },
+            {
+              step: "03",
+              label: "Build",
+              text: "I design, develop, and test the product in stages so feedback stays practical and fast.",
+            },
+            {
+              step: "04",
+              label: "Launch & improve",
+              text: "The work goes live, then we optimize based on real use, bugs, or new opportunities.",
+            },
+          ].map((item) => (
+            <Reveal key={item.step} delay={0.04 * Number(item.step.slice(-1))}>
+              <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-md">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                  {item.step}
+                </p>
+                <h3 className="mt-3 text-xl font-semibold text-foreground">
+                  {item.label}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {item.text}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
 
       <Section className="bg-muted/40">
         <Reveal>

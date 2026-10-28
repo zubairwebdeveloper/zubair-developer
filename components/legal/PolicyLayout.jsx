@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
   LayoutGroup,
@@ -15,7 +15,9 @@ import {
   ListTree,
   Mail,
   Printer,
+  Search,
   TriangleAlert,
+  X,
 } from "lucide-react";
 
 import { Reveal } from "@/components/shared/Reveal";
@@ -29,6 +31,16 @@ function Block({ block, showDraftNotes }) {
   if (block.type === "p") {
     return (
       <p className="text-foreground/85 max-w-[68ch] leading-7">{block.text}</p>
+    );
+  }
+  if (block.type === "note") {
+    return (
+      <div
+        role="note"
+        className="border-border bg-muted/40 max-w-[68ch] rounded-xl border p-4 text-sm leading-6 text-muted-foreground"
+      >
+        {block.text}
+      </div>
     );
   }
   if (block.type === "ul") {
@@ -68,6 +80,55 @@ function Block({ block, showDraftNotes }) {
   return null;
 }
 
+function Toc({ sections, active, onPick, reduce }) {
+  return (
+    <LayoutGroup id="policy-toc">
+      <ol className="flex flex-col gap-0.5">
+        {sections.map((section, index) => {
+          const selected = active === section.id;
+          return (
+            <li key={section.id}>
+              <a
+                href={`#${section.id}`}
+                aria-current={selected ? "location" : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onPick(section.id);
+                }}
+                className={`focus-visible:ring-ring relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm outline-none transition-colors focus-visible:ring-2 motion-reduce:transition-none ${
+                  selected
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {selected ? (
+                  <motion.span
+                    layoutId="policy-toc-indicator"
+                    aria-hidden="true"
+                    className="bg-muted absolute inset-0 rounded-lg"
+                    transition={
+                      reduce
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 420, damping: 36 }
+                    }
+                  />
+                ) : null}
+                <span
+                  aria-hidden="true"
+                  className="text-muted-foreground/70 relative z-10 w-5 text-xs tabular-nums"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="relative z-10">{section.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </LayoutGroup>
+  );
+}
+
 /**
  * sections: [{ id, title, summary?, blocks: [{type:"p"|"ul"|"todo", ...}] }]
  * highlights: [{ title, text }]
@@ -79,6 +140,8 @@ export function PolicyLayout({
   email = "",
   lastUpdated = null,
   showDraftNotes = true,
+  showDataRequest = true,
+  draftNote = "",
 }) {
   const reduce = useReducedMotion();
   const [active, setActive] = useState(sections[0]?.id ?? "");
@@ -86,11 +149,33 @@ export function PolicyLayout({
   const [copiedId, setCopiedId] = useState(null);
   const [copyError, setCopyError] = useState(false);
   const [showTop, setShowTop] = useState(false);
+  const [query, setQuery] = useState("");
   const timer = useRef(null);
+  const visibleSections = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return sections;
+    return sections.filter((section) => {
+      const content = [
+        section.title,
+        section.summary,
+        ...(section.blocks ?? []).flatMap((block) => [
+          block.text,
+          ...(block.items ?? []),
+        ]),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return content.includes(needle);
+    });
+  }, [sections, query]);
+  const activeSection = visibleSections.some((section) => section.id === active)
+    ? active
+    : (visibleSections[0]?.id ?? "");
 
   // Scroll-spy: jo section screen ke upar hissay ma ho wo active
   useEffect(() => {
-    const els = sections
+    const els = visibleSections
       .map((s) => document.getElementById(s.id))
       .filter(Boolean);
     if (els.length === 0) return;
@@ -106,7 +191,7 @@ export function PolicyLayout({
     );
     els.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [sections]);
+  }, [visibleSections]);
 
   // Back-to-top button
   useEffect(() => {
@@ -162,58 +247,14 @@ export function PolicyLayout({
       )}`
     : null;
 
-  const activeTitle = sections.find((s) => s.id === active)?.title;
-
-  const Toc = ({ onPick }) => (
-    <LayoutGroup id="policy-toc">
-      <ol className="flex flex-col gap-0.5">
-        {sections.map((section, index) => {
-          const selected = active === section.id;
-          return (
-            <li key={section.id}>
-              <a
-                href={`#${section.id}`}
-                aria-current={selected ? "location" : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  onPick(section.id);
-                }}
-                className={`focus-visible:ring-ring relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm outline-none transition-colors focus-visible:ring-2 motion-reduce:transition-none ${
-                  selected
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {selected ? (
-                  <motion.span
-                    layoutId="policy-toc-indicator"
-                    aria-hidden="true"
-                    className="bg-muted absolute inset-0 rounded-lg"
-                    transition={
-                      reduce
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 420, damping: 36 }
-                    }
-                  />
-                ) : null}
-                <span
-                  aria-hidden="true"
-                  className="text-muted-foreground/70 relative z-10 w-5 text-xs tabular-nums"
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="relative z-10">{section.title}</span>
-              </a>
-            </li>
-          );
-        })}
-      </ol>
-    </LayoutGroup>
-  );
+  const activeTitle = visibleSections.find(
+    (section) => section.id === activeSection,
+  )?.title;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-14">
       {/* Contents */}
+      {visibleSections.length > 0 ? (
       <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start print:hidden">
         {/* Mobile: collapsible */}
         <div className="border-border bg-card rounded-2xl border lg:hidden">
@@ -249,7 +290,12 @@ export function PolicyLayout({
                 className="overflow-hidden"
               >
                 <nav aria-label="Policy contents" className="px-2 pb-3">
-                  <Toc onPick={goTo} />
+                  <Toc
+                    sections={visibleSections}
+                    active={activeSection}
+                    reduce={reduce}
+                    onPick={goTo}
+                  />
                 </nav>
               </motion.div>
             ) : null}
@@ -261,20 +307,26 @@ export function PolicyLayout({
           <p className="text-muted-foreground mb-3 px-3 text-xs font-medium">
             On this page
           </p>
-          <Toc onPick={goTo} />
+          <Toc
+            sections={visibleSections}
+            active={activeSection}
+            reduce={reduce}
+            onPick={goTo}
+          />
         </nav>
       </aside>
+      ) : null}
 
       {/* Content */}
       <div className="flex min-w-0 flex-col gap-10">
         {/* Meta + tools */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
-          <p className="text-muted-foreground text-sm">
-            {lastUpdated
-              ? `Last updated: ${lastUpdated}`
-              : "Plain-language policy"}
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-4 print:hidden">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-sm">
+              {lastUpdated
+                ? `Last updated: ${lastUpdated}`
+                : "Plain-language policy"}
+            </p>
             <button
               type="button"
               onClick={() => window.print()}
@@ -284,10 +336,72 @@ export function PolicyLayout({
               Print or save as PDF
             </button>
           </div>
+          <div className="relative w-full sm:max-w-md">
+            <label htmlFor="legal-search" className="sr-only">
+              Search this document
+            </label>
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              id="legal-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search this document"
+              className="min-h-11 w-full rounded-lg border border-border bg-background pl-9 pr-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            {query ? (
+              <button
+                type="button"
+                aria-label="Clear document search"
+                onClick={() => setQuery("")}
+                className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
+        {draftNote ? (
+          <div
+            role="note"
+            className="border-border bg-muted/40 rounded-xl border p-4 text-sm leading-6 text-muted-foreground"
+          >
+            {draftNote}
+          </div>
+        ) : null}
+
+        {visibleSections.length === 0 ? (
+          <div
+            className="border-border bg-card flex flex-col items-start gap-3 rounded-2xl border border-dashed p-6 sm:p-8"
+            role="status"
+            aria-live="polite"
+          >
+            <h2 className="font-heading text-lg font-semibold">
+              No matching sections
+            </h2>
+            <p className="text-muted-foreground text-sm leading-6">
+              Try another word or clear your search to read the full document.
+            </p>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className={ghostButton}
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          <p className="sr-only" role="status" aria-live="polite">
+            Showing {visibleSections.length} of {sections.length} sections
+          </p>
+        )}
+
         {/* Highlights */}
-        {highlights.length > 0 ? (
+        {highlights.length > 0 && !query.trim() ? (
           <ul aria-label="Key points" className="grid gap-4 md:grid-cols-3">
             {highlights.map((item) => (
               <li key={item.title}>
@@ -312,7 +426,7 @@ export function PolicyLayout({
 
         {/* Sections */}
         <div id="policy-content" className="flex flex-col gap-10">
-          {sections.map((section, index) => (
+          {visibleSections.map((section, index) => (
             <Reveal key={section.id} direction="up">
               <section
                 id={section.id}
@@ -370,40 +484,42 @@ export function PolicyLayout({
         </div>
 
         {/* Data request */}
-        <Reveal direction="up">
-          <div className="bg-foreground text-background relative isolate overflow-hidden rounded-3xl p-6 sm:p-10 print:hidden">
-            <div
-              aria-hidden="true"
-              className="bg-primary/30 pointer-events-none absolute -top-20 -right-20 -z-10 size-64 rounded-full blur-3xl"
-            />
-            <div className="flex max-w-2xl flex-col gap-3">
-              <h2 className="font-heading text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.15] font-semibold tracking-tight text-balance">
-                Want to access or delete your data?
-              </h2>
-              <p className="text-background/75 leading-7">
-                Send a request and say which one you need. Use the email address
-                you used on this website so it can be matched.
-              </p>
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {mailto ? (
+        {showDataRequest && visibleSections.length > 0 ? (
+          <Reveal direction="up">
+            <div className="bg-foreground text-background relative isolate overflow-hidden rounded-3xl p-6 sm:p-10 print:hidden">
+              <div
+                aria-hidden="true"
+                className="bg-primary/30 pointer-events-none absolute -top-20 -right-20 -z-10 size-64 rounded-full blur-3xl"
+              />
+              <div className="flex max-w-2xl flex-col gap-3">
+                <h2 className="font-heading text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.15] font-semibold tracking-tight text-balance">
+                  Want to access or delete your data?
+                </h2>
+                <p className="text-background/75 leading-7">
+                  Send a request and say which one you need. Use the email address
+                  you used on this website so it can be matched.
+                </p>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  {mailto ? (
+                    <a
+                      href={mailto}
+                      className="group bg-primary text-primary-foreground focus-visible:ring-primary focus-visible:ring-offset-foreground inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-medium outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 motion-safe:active:scale-[0.98]"
+                    >
+                      <Mail aria-hidden="true" className="size-4" />
+                      Email a data request
+                    </a>
+                  ) : null}
                   <a
-                    href={mailto}
-                    className="group bg-primary text-primary-foreground focus-visible:ring-primary focus-visible:ring-offset-foreground inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-medium outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 motion-safe:active:scale-[0.98]"
+                    href="/contact"
+                    className="border-background/25 hover:bg-background/10 focus-visible:ring-primary focus-visible:ring-offset-foreground inline-flex min-h-11 items-center justify-center rounded-lg border px-5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
                   >
-                    <Mail aria-hidden="true" className="size-4" />
-                    Email a data request
+                    Use the contact form
                   </a>
-                ) : null}
-                <a
-                  href="/contact"
-                  className="border-background/25 hover:bg-background/10 focus-visible:ring-primary focus-visible:ring-offset-foreground inline-flex min-h-11 items-center justify-center rounded-lg border px-5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
-                >
-                  Use the contact form
-                </a>
+                </div>
               </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        ) : null}
       </div>
 
       <span className="sr-only" role="status" aria-live="polite">

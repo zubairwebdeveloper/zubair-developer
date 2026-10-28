@@ -28,6 +28,7 @@ const PROCESS_STEPS = [
 
 const QUICK_LINKS = [
   { href: "/hire-me", label: "Start a project" },
+  { href: "/projects", label: "View my work" },
   { href: "/pricing", label: "Pricing" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
@@ -405,7 +406,8 @@ export async function SiteFooter() {
             ) : null}
 
             <a
-              href="#"
+              href="#top"
+              aria-label="Back to page top"
               className="group/top inline-flex w-fit items-center gap-1.5 rounded-sm py-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Back to top

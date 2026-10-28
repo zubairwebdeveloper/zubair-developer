@@ -5,20 +5,20 @@ import { useReducedMotion } from "framer-motion";
 
 export function TypedHeadline({ text, className }) {
   const reduce = useReducedMotion();
-  const [count, setCount] = useState(0);
+  const [animation, setAnimation] = useState({ text, count: 0 });
 
   useEffect(() => {
     if (reduce) return;
-    setCount(0);
     let i = 0;
     const timer = setInterval(() => {
       i += 1;
-      setCount(i);
+      setAnimation({ text, count: i });
       if (i >= text.length) clearInterval(timer);
     }, 35);
     return () => clearInterval(timer);
   }, [text, reduce]);
 
+  const count = animation.text === text ? animation.count : 0;
   const shown = reduce ? text : text.slice(0, count);
 
   return (

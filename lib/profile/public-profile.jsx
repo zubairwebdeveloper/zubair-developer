@@ -342,6 +342,7 @@ export function getPublicProfile(settings) {
 
   if (
     process.env.NODE_ENV !== "production" &&
+    Object.keys(root).length > 0 &&
     !headline &&
     !bio &&
     socials.length === 0

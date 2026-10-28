@@ -1,7 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   FiArrowLeft,
   FiCheck,
@@ -66,10 +73,9 @@ export function openAdminPalette(view = "search") {
 
 /** Platform-aware modifier label. Resolved after mount to avoid hydration mismatch. */
 export function useShortcutLabel() {
-  const [isMac, setIsMac] = useState(false);
-  useEffect(() => {
-    if (/Mac|iPhone|iPad/i.test(navigator.userAgent)) setIsMac(true);
-  }, []);
+  const subscribe = () => () => {};
+  const getSnapshot = () => /Mac|iPhone|iPad/i.test(navigator.userAgent);
+  const isMac = useSyncExternalStore(subscribe, getSnapshot, () => false);
   return { isMac, mod: isMac ? "⌘" : "Ctrl" };
 }
 
@@ -239,15 +245,18 @@ export function AdminCommandPalette({
 
   /* Load saved lists when opening; reset transient state when closing. */
   useEffect(() => {
-    if (open) {
-      setRecent(readList(RECENT_KEY));
-      setPinned(readList(FAVORITES_KEY));
-      setCanFullscreen(Boolean(document.fullscreenEnabled));
-    } else {
-      setSearch("");
-      setView("search");
-      setCopyStatus("idle");
-    }
+    const frame = window.requestAnimationFrame(() => {
+      if (open) {
+        setRecent(readList(RECENT_KEY));
+        setPinned(readList(FAVORITES_KEY));
+        setCanFullscreen(Boolean(document.fullscreenEnabled));
+      } else {
+        setSearch("");
+        setView("search");
+        setCopyStatus("idle");
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   useEffect(() => () => clearTimeout(copyTimer.current), []);

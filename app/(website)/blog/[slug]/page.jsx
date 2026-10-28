@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock, UserRound } from "lucide-react";
 
+import { ArticleContents } from "@/components/blog/ArticleContents";
 import { ReadingProgress } from "@/components/blog/ReadingProgress";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Reveal } from "@/components/shared/Reveal";
 import { Section } from "@/components/shared/Section";
 import { siteConfig } from "@/config/site";
+import { parseArticleContent } from "@/lib/blog/article-content";
 import { formatDate } from "@/lib/utils/dates";
 import { getPostBySlug, getPosts } from "@/services/content.service";
 
@@ -47,10 +49,10 @@ export default async function BlogPostPage({ params }) {
   const [post, allPosts] = await Promise.all([getPostBySlug(slug), getPosts()]);
   if (!post) notFound();
 
-  const paragraphs = post.content
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const contentBlocks = parseArticleContent(post.content);
+  const contents = contentBlocks
+    .filter((block) => block.type === "heading" || block.type === "subheading")
+    .map(({ id, title, type }) => ({ id, title, type }));
 
   const minutes = getReadingMinutes(post.content);
   const morePosts = allPosts
@@ -85,7 +87,7 @@ export default async function BlogPostPage({ params }) {
       />
 
       <Section>
-        <div className="flex max-w-3xl flex-col gap-8">
+        <div className="flex w-full flex-col gap-8">
           {/* Meta + back */}
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
             <Link
@@ -126,19 +128,45 @@ export default async function BlogPostPage({ params }) {
             </Reveal>
           ) : null}
 
-          {/* Article body */}
-          <article id={ARTICLE_ID} className="flex flex-col gap-6">
-            {paragraphs.map((paragraph, index) => (
-              <p
-                key={index}
-                className={`text-body-lg max-w-[68ch] whitespace-pre-line leading-8 ${
-                  index === 0 ? "text-foreground" : "text-foreground/85"
-                }`}
-              >
-                {paragraph}
-              </p>
-            ))}
-          </article>
+          <div className="grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+            <article id={ARTICLE_ID} className="flex min-w-0 flex-col gap-6">
+              {contentBlocks.map((block, index) => {
+                if (block.type === "heading") {
+                  return (
+                    <h2
+                      key={block.id}
+                      id={block.id}
+                      className="scroll-mt-28 font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+                    >
+                      {block.title}
+                    </h2>
+                  );
+                }
+                if (block.type === "subheading") {
+                  return (
+                    <h3
+                      key={block.id}
+                      id={block.id}
+                      className="scroll-mt-28 font-heading text-xl font-semibold tracking-tight text-foreground"
+                    >
+                      {block.title}
+                    </h3>
+                  );
+                }
+                return (
+                  <p
+                    key={`paragraph-${index}`}
+                    className={`text-body-lg max-w-[68ch] whitespace-pre-line leading-8 ${
+                      index === 0 ? "text-foreground" : "text-foreground/85"
+                    }`}
+                  >
+                    {block.text}
+                  </p>
+                );
+              })}
+            </article>
+            <ArticleContents items={contents} />
+          </div>
 
           {/* Share */}
           <div className="border-border flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">

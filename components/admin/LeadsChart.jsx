@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   Area,
   AreaChart,
@@ -26,17 +32,14 @@ const formatNumber = (value) =>
   Number.isInteger(value) ? String(value) : value.toFixed(1);
 
 function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
+  const subscribe = (callback) => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(media.matches);
-    const onChange = (event) => setReduced(event.matches);
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
-
-  return reduced;
+    media.addEventListener("change", callback);
+    return () => media.removeEventListener("change", callback);
+  };
+  const getSnapshot = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -116,11 +119,16 @@ export function LeadsChart({ data }) {
   const gradientId = `leads-fill-${useId().replace(/:/g, "")}`;
 
   const points = useMemo(() => {
-    let running = 0;
-    return (data ?? []).map((point) => {
-      running += point.leads;
-      return { ...point, cumulative: running };
-    });
+    return (data ?? []).reduce(
+      (result, point) => {
+        const cumulative = result.total + point.leads;
+        return {
+          total: cumulative,
+          points: [...result.points, { ...point, cumulative }],
+        };
+      },
+      { total: 0, points: [] },
+    ).points;
   }, [data]);
 
   const stats = useMemo(() => {
@@ -143,10 +151,10 @@ export function LeadsChart({ data }) {
     const second = points
       .slice(mid)
       .reduce((sum, point) => sum + point.leads, 0);
-    let trend = null;
-    if (days >= 4 && first > 0) {
-      trend = Math.round(((second - first) / first) * 100);
-    }
+    const trend =
+      days >= 4 && first > 0
+        ? Math.round(((second - first) / first) * 100)
+        : null;
 
     return { total, days, average, busiest, busiestIndex, trend };
   }, [points]);

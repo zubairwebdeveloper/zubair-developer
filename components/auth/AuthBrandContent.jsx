@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -91,14 +90,7 @@ export function AuthBrandContent() {
   const content = CONTENT[href] ?? CONTENT["/login"];
   const BadgeIcon = content.badgeIcon;
 
-  const previousIndex = useRef(index);
-  const dir = index >= previousIndex.current ? 1 : -1;
-
-  useEffect(() => {
-    previousIndex.current = index;
-  }, [index]);
-
-  const custom = { dir, reduce: Boolean(reduce) };
+  const custom = { dir: 1, reduce: Boolean(reduce) };
 
   return (
     // min-h: content badalte waqt layout jump na ho

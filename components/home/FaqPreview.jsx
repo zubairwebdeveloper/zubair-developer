@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { Section } from "@/components/shared/Section";
 import { SectionHeading } from "@/components/shared/SectionHeading";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { getFaqs } from "@/services/content.service";
 
 const PREVIEW_LIMIT = 5;
@@ -32,7 +32,6 @@ export async function FaqPreview({
   if (!faqs || faqs.length === 0) return null;
 
   const preview = faqs.slice(0, limit);
-  const hasMore = faqs.length > preview.length;
 
   return (
     <Section className="bg-muted/40">
@@ -44,14 +43,15 @@ export async function FaqPreview({
             together.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            {hasMore ? (
-              <Button  variant="outline" size="lg">
-                <Link href={allHref}>View all {faqs.length} questions</Link>
-              </Button>
-            ) : null}
-            <Button  size="lg">
-              <Link href={contactHref}>Discuss your project</Link>
-            </Button>
+            <Link
+              href={allHref}
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
+              View all FAQs
+            </Link>
+            <Link href={contactHref} className={buttonVariants({ size: "lg" })}>
+              Discuss your project
+            </Link>
           </div>
         </div>
 

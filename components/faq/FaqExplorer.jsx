@@ -94,12 +94,15 @@ export function FaqExplorer({ faqs }) {
 
   // Feedback wapas load karo (client par, hydration-safe)
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(FEEDBACK_KEY);
-      if (raw) setFeedback(JSON.parse(raw) || {});
-    } catch {
-      // storage block ho to bhi page theek chalta hai
-    }
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const raw = window.localStorage.getItem(FEEDBACK_KEY);
+        if (raw) setFeedback(JSON.parse(raw) || {});
+      } catch {
+        // storage block ho to bhi page theek chalta hai
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   // Deep link: /faq#faq-3 seedha us sawal ko kholta hai
@@ -107,16 +110,22 @@ export function FaqExplorer({ faqs }) {
     const hash = window.location.hash.slice(1);
     const match = items.find((item) => toAnchor(item.key) === hash);
     if (!match) return;
-    setOpenKeys(new Set([match.key]));
-    const t = setTimeout(
-      () =>
-        document.getElementById(hash)?.scrollIntoView({
-          behavior: reduce ? "auto" : "smooth",
-          block: "center",
-        }),
-      150,
-    );
-    return () => clearTimeout(t);
+    let timer;
+    const frame = window.requestAnimationFrame(() => {
+      setOpenKeys(new Set([match.key]));
+      timer = window.setTimeout(
+        () =>
+          document.getElementById(hash)?.scrollIntoView({
+            behavior: reduce ? "auto" : "smooth",
+            block: "center",
+          }),
+        150,
+      );
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
     // sirf pehli dafa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

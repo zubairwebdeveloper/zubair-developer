@@ -1,11 +1,22 @@
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { BackToTop } from "@/components/motion/BackToTop";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
-import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { MobileCTA } from "@/components/layout/MobileCTA";
+import { ScrollProgress } from "@/components/motion/ScrollProgress";
+import { siteConfig } from "@/config/site";
 import { getSiteSettings } from "@/services/settingsService";
 
 export default async function WebsiteLayout({ children }) {
   const settings = await getSiteSettings();
-  const announcement = settings?.announcement;
+
+  const email =
+    siteConfig.contactEmail ??
+    siteConfig.contact?.email ??
+    siteConfig.email ??
+    null;
+
+  const whatsapp = settings?.socials?.find((s) => s.id === "whatsapp")?.href ?? null;
+  const quickContact = whatsapp ?? (email ? `mailto:${email}` : "/contact");
+  const quickLabel = whatsapp ? "WhatsApp" : "Email";
 
   return (
     <>
@@ -17,13 +28,18 @@ export default async function WebsiteLayout({ children }) {
       </a>
 
       <ScrollProgress />
-      <AnnouncementBar announcement={announcement} />
 
       <main id="main-content" tabIndex={-1} className="focus:outline-none">
         {children}
       </main>
 
       <ConnectionStatus />
+      <BackToTop />
+      <MobileCTA
+        quickContact={quickContact}
+        quickLabel={quickLabel}
+        whatsapp={whatsapp}
+      />
     </>
   );
 }

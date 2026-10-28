@@ -4,14 +4,14 @@ test("homepage shows the hero and primary calls to action", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Building Digital Products",
+  await expect(page.getByRole("heading", { level: 1 })).toHaveAccessibleName(
+    /I build digital products/,
   );
   await expect(
     page.getByRole("link", { name: "Start a Project" }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Explore My Work" }),
+    page.getByRole("link", { name: "See My Work" }),
   ).toHaveAttribute("href", "/projects");
 });
 

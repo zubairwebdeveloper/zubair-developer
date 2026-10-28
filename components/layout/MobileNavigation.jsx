@@ -13,7 +13,7 @@ import {
   FiSearch,
   FiUser,
 } from "react-icons/fi";
-import { Laptop, Moon, Sun } from "lucide-react";
+import { Laptop, LayoutDashboard, Moon, Sun } from "lucide-react";
 
 import { HeaderAuthLink } from "@/components/auth/HeaderAuthLink";
 import { OPEN_PALETTE_EVENT } from "@/components/layout/CommandPalette";
@@ -26,7 +26,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Stagger } from "@/components/motion/Stagger";
 import { mainNavigation, primaryCta, siteConfig } from "@/config/site";
+import { getPublicProfile } from "@/lib/profile/public-profile";
 import { cn } from "@/lib/utils/cn";
 
 const DEFAULT_PROFILE_LINKS = [
@@ -70,29 +72,35 @@ export function MobileNavigation({
   user: userProp,
   profileLinks = DEFAULT_PROFILE_LINKS,
   onSignOut: onSignOutProp,
+  canAccessDashboard = false,
+  checkingAuth: checkingAuthProp,
 }) {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const auth = useHeaderUser();
+  const auth = useHeaderUser({ enabled: userProp === undefined });
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  const user = userProp ?? auth.user;
+  const user = userProp === undefined ? auth.user : userProp;
   const onSignOut = onSignOutProp ?? auth.signOut;
-  const checkingAuth = userProp === undefined && auth.loading;
+  const checkingAuth =
+    checkingAuthProp ?? (userProp === undefined && auth.loading);
   const email = siteConfig?.contact?.email ?? siteConfig?.email ?? null;
   const displayName = user?.name || user?.email || "Account";
   const activeTheme = mounted ? (theme ?? "system") : "system";
+  const { socials } = getPublicProfile();
 
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   // Close the menu on any route change (including browser back/forward).
   useEffect(() => {
-    setOpen(false);
+    const frame = window.requestAnimationFrame(() => setOpen(false));
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   function openSearch() {
@@ -187,16 +195,12 @@ export function MobileNavigation({
             </Button>
 
             <nav aria-label="Mobile">
-              <ul className="flex flex-col gap-1">
-                {mainNavigation.map((item, index) => {
+              <Stagger as="ul" className="flex flex-col gap-1" staggerDelay={0.05}>
+                {mainNavigation.map((item) => {
                   const active = isActivePath(pathname, item.href);
 
                   return (
-                    <li
-                      key={item.href}
-                      style={{ animationDelay: `${index * 40}ms` }}
-                      className={revealClass}
-                    >
+                    <li key={item.href}>
                       <Link
                         href={item.href}
                         onClick={() => setOpen(false)}
@@ -226,10 +230,10 @@ export function MobileNavigation({
                     </li>
                   );
                 })}
-              </ul>
+              </Stagger>
             </nav>
 
-            {user && profileLinks.length > 0 ? (
+            {user && (canAccessDashboard || profileLinks.length > 0) ? (
               <nav
                 aria-label="Account"
                 className="mt-4 border-t border-border/70 pt-4"
@@ -238,6 +242,29 @@ export function MobileNavigation({
                   Account
                 </p>
                 <ul className="flex flex-col gap-1">
+                  {canAccessDashboard ? (
+                    <li>
+                      <Link
+                        href="/admin"
+                        onClick={() => setOpen(false)}
+                        aria-current={
+                          isActivePath(pathname, "/admin") ? "page" : undefined
+                        }
+                        className={cn(
+                          rowClass,
+                          "justify-start",
+                          isActivePath(pathname, "/admin") &&
+                            "bg-primary/10 text-foreground",
+                        )}
+                      >
+                        <LayoutDashboard
+                          aria-hidden="true"
+                          className="size-4 shrink-0 text-primary"
+                        />
+                        <span className="flex-1">Admin dashboard</span>
+                      </Link>
+                    </li>
+                  ) : null}
                   {profileLinks.map(({ label, href, icon: Icon = FiUser }) => {
                     const active = isActivePath(pathname, href);
 
@@ -338,6 +365,23 @@ export function MobileNavigation({
                 className="size-4 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
               />
             </Link>
+
+            {socials && socials.length > 0 ? (
+              <div className="flex items-center justify-center gap-3">
+                {socials.map((social) => (
+                  <a
+                    key={social.id}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <social.icon className="size-5" />
+                  </a>
+                ))}
+              </div>
+            ) : null}
 
             {email ? (
               <a

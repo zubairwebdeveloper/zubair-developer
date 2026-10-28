@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   AnimatePresence,
@@ -19,6 +20,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  LockKeyhole,
   Mail,
   ShieldCheck,
   UserRound,
@@ -214,6 +216,12 @@ function Overview({ summary, steps, go }) {
       title: "Get help",
       text: "Answers to common account questions.",
     },
+    {
+      href: "/privacy#your-choices",
+      icon: LockKeyhole,
+      title: "Privacy and data",
+      text: "Review your data choices and request access or deletion.",
+    },
   ];
 
   function onNext() {
@@ -231,17 +239,24 @@ function Overview({ summary, steps, go }) {
     <div className="flex flex-col gap-6">
       {/* Identity */}
       <Rise i={0}>
-        <div className="border-border bg-card flex flex-col gap-5 rounded-2xl border p-5 sm:p-6">
+        <div className="relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/10 p-5 shadow-sm sm:p-6">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-14 -top-20 -z-10 size-48 rounded-full bg-primary/10 blur-3xl"
+          />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <span
               aria-hidden="true"
-              className="bg-primary text-primary-foreground font-heading flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold"
+              className="bg-primary text-primary-foreground font-heading flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold shadow-sm"
             >
               {summary.initials}
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="font-heading truncate text-lg font-semibold tracking-tight">
-                {summary.name || "Add your name"}
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Account overview
+              </p>
+              <p className="font-heading truncate text-xl font-semibold tracking-tight">
+                {summary.name ? `Welcome back, ${summary.name}` : "Welcome back"}
               </p>
               <p className="text-muted-foreground truncate text-sm">
                 {summary.email}
@@ -249,7 +264,7 @@ function Overview({ summary, steps, go }) {
             </div>
             <CopyEmailButton email={summary.email} />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 border-t border-border/70 pt-4">
             <Badge variant={summary.emailVerified ? "secondary" : "outline"}>
               {summary.emailVerified ? "Email verified" : "Email not verified"}
             </Badge>
@@ -345,31 +360,55 @@ function Overview({ summary, steps, go }) {
 
       {/* Quick actions */}
       <Rise i={3}>
-        <ul className="grid gap-4 sm:grid-cols-3">
-          {quickActions.map(({ tab, icon: Icon, title, text }) => (
-            <li key={tab}>
-              <button
-                type="button"
-                onClick={() => go(tab)}
-                className="group border-border bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full w-full flex-col items-start gap-3 rounded-2xl border p-5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
-              >
-                <span
-                  aria-hidden="true"
-                  className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg"
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {quickActions.map(({ tab, href, icon: Icon, title, text }) => (
+            <li key={href ?? tab}>
+              {href ? (
+                <Link
+                  href={href}
+                  className="group border-border bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full w-full flex-col items-start gap-3 rounded-2xl border p-5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
                 >
-                  <Icon className="size-5" />
-                </span>
-                <span className="flex flex-col gap-1">
-                  <span className="font-medium">{title}</span>
-                  <span className="text-muted-foreground text-sm leading-6">
-                    {text}
+                  <span
+                    aria-hidden="true"
+                    className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg"
+                  >
+                    <Icon className="size-5" />
                   </span>
-                </span>
-                <ArrowRight
-                  aria-hidden="true"
-                  className="text-muted-foreground mt-auto size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
-                />
-              </button>
+                  <span className="flex flex-col gap-1">
+                    <span className="font-medium">{title}</span>
+                    <span className="text-muted-foreground text-sm leading-6">
+                      {text}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="text-muted-foreground mt-auto size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                  />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => go(tab)}
+                  className="group border-border bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full w-full flex-col items-start gap-3 rounded-2xl border p-5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg"
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="flex flex-col gap-1">
+                    <span className="font-medium">{title}</span>
+                    <span className="text-muted-foreground text-sm leading-6">
+                      {text}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="text-muted-foreground mt-auto size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                  />
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -619,10 +658,13 @@ export function AccountWorkspace({
 
   // /account#security jaise links se seedha tab kholo
   useEffect(() => {
-    const id = window.location.hash.replace("#", "");
-    if (TAB_IDS.includes(id) && id !== "overview") {
-      setView({ tab: id, dir: 1 });
-    }
+    const frame = window.requestAnimationFrame(() => {
+      const id = window.location.hash.replace("#", "");
+      if (TAB_IDS.includes(id) && id !== "overview") {
+        setView({ tab: id, dir: 1 });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function onKeyDown(event) {

@@ -45,7 +45,7 @@ describe("requireApiAdmin", () => {
 
 describe("requirePageAdmin", () => {
   it("redirects anonymous visitors to login", async () => {
-    await expect(requirePageAdmin()).rejects.toThrow("REDIRECT:/login");
+    await expect(requirePageAdmin()).rejects.toThrow("REDIRECT:/admin/login");
   });
 
   it("shows 404 when the role lacks the permission", async () => {
@@ -58,6 +58,7 @@ describe("requirePageAdmin", () => {
 
 describe("guardAdminRequest", () => {
   it("rejects cross-origin mutations before checking the session", async () => {
+    getCurrentAdmin.mockClear();
     getCurrentAdmin.mockResolvedValue(sales);
     const result = await guardAdminRequest(
       request("POST", "http://evil.example"),

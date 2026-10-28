@@ -43,6 +43,12 @@ function SectionTitle({ id, number, children }) {
   );
 }
 
+const QUICK_BENEFITS = [
+  "Clear project scope before build starts",
+  "Responsive builds with a realistic delivery plan",
+  "Support after launch for updates and maintenance",
+];
+
 export default async function ServiceDetailPage({ params }) {
   const { slug } = await params;
   const [service, allServices] = await Promise.all([
@@ -70,6 +76,36 @@ export default async function ServiceDetailPage({ params }) {
         title={service.title}
         description={service.summary}
       />
+
+      <Section className="pt-0">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-card/80 p-5 shadow-soft sm:p-7">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-grid-subtle opacity-60"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-12 top-0 h-44 w-44 rounded-full bg-primary/10 blur-3xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-12 bottom-0 h-40 w-40 rounded-full bg-violet/10 blur-3xl"
+            />
+
+            <div className="relative grid gap-4 md:grid-cols-3">
+              {QUICK_BENEFITS.map((benefit) => (
+                <div
+                  key={benefit}
+                  className="rounded-2xl border border-border bg-background/70 p-4 text-sm leading-relaxed text-muted-foreground shadow-sm transition-transform duration-300 motion-safe:hover:-translate-y-1"
+                >
+                  {benefit}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </Section>
 
       <Section>
         <div className="grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-14">
@@ -136,7 +172,10 @@ export default async function ServiceDetailPage({ params }) {
             ) : null}
 
             <Reveal>
-              <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-muted/40 p-6 sm:p-8">
+              <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-muted/40 p-6 shadow-sm sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Delivery
+                </p>
                 <h2 className="text-card-title text-foreground">
                   Want to know how the work is organised?
                 </h2>
@@ -157,33 +196,39 @@ export default async function ServiceDetailPage({ params }) {
 
           <aside
             aria-label="Pricing and quote"
-            className="flex h-fit flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-24"
+            className="relative flex h-fit flex-col gap-4 overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-soft lg:sticky lg:top-24"
           >
-            <p className="text-label text-muted-foreground">Starting at</p>
-            <p className="text-metric text-3xl text-foreground">
-              {formatPrice({
-                price: service.startingPrice,
-                currency: service.currency,
-                isStartingPrice: true,
-              })}
-            </p>
-            {service.engagement ? (
-              <p className="border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
-                {service.engagement}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl"
+            />
+            <div className="relative flex flex-col gap-4">
+              <p className="text-label text-muted-foreground">Starting at</p>
+              <p className="text-metric text-3xl text-foreground">
+                {formatPrice({
+                  price: service.startingPrice,
+                  currency: service.currency,
+                  isStartingPrice: true,
+                })}
               </p>
-            ) : null}
-            <Link
-              href={quoteHref}
-              className={`${buttonVariants({ size: "lg" })} motion-safe:active:scale-[0.98]`}
-            >
-              Request a quote
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Or discuss your project first
-            </Link>
+              {service.engagement ? (
+                <p className="border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
+                  {service.engagement}
+                </p>
+              ) : null}
+              <Link
+                href={quoteHref}
+                className={`${buttonVariants({ size: "lg" })} motion-safe:active:scale-[0.98]`}
+              >
+                Request a quote
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Or discuss your project first
+              </Link>
+            </div>
           </aside>
         </div>
       </Section>
@@ -197,8 +242,12 @@ export default async function ServiceDetailPage({ params }) {
             {others.map((item, index) => (
               <li key={item.slug} className="grid">
                 <Reveal delay={index * 0.06}>
-                  <article className="group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/40 hover:shadow-md focus-within:ring-2 focus-within:ring-ring motion-safe:hover:-translate-y-0.5">
-                    <h3 className="text-card-title text-foreground">
+                  <article className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/40 hover:shadow-md focus-within:ring-2 focus-within:ring-ring motion-safe:hover:-translate-y-0.5">
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/8 blur-2xl transition-transform duration-300 motion-safe:group-hover:scale-125"
+                    />
+                    <h3 className="relative text-card-title text-foreground">
                       <Link
                         href={`/services/${item.slug}`}
                         className="focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
@@ -207,11 +256,11 @@ export default async function ServiceDetailPage({ params }) {
                       </Link>
                     </h3>
                     {item.summary ? (
-                      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                      <p className="relative line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                         {item.summary}
                       </p>
                     ) : null}
-                    <p className="text-metric mt-auto pt-2 text-sm text-brand">
+                    <p className="relative mt-auto pt-2 text-sm font-medium text-brand">
                       {formatPrice({
                         price: item.startingPrice,
                         currency: item.currency,

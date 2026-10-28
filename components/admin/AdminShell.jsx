@@ -24,12 +24,15 @@ export function AdminShell({ admin, children }) {
 
   // Restore the sidebar preference after mount (avoids a hydration mismatch).
   useEffect(() => {
-    try {
-      if (window.localStorage.getItem(COLLAPSED_KEY) === "true")
-        setCollapsed(true);
-    } catch {
-      // Storage can be unavailable. The sidebar simply starts expanded.
-    }
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        if (window.localStorage.getItem(COLLAPSED_KEY) === "true")
+          setCollapsed(true);
+      } catch {
+        // Storage can be unavailable. The sidebar simply starts expanded.
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   // Close the mobile drawer if the window grows to desktop size while it is open.

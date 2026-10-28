@@ -25,7 +25,7 @@ export function AuthBrandPanel() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
       >
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--background)_6%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_6%,transparent)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top_right,black_20%,transparent_75%)]" />
+        <div className="auth-grid-drift absolute -inset-12 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--background)_6%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--background)_6%,transparent)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top_right,black_20%,transparent_75%)]" />
         <div className="absolute -right-24 -top-24 size-80 rounded-full bg-primary/30 blur-3xl" />
         <div className="absolute -bottom-32 -left-24 size-80 rounded-full bg-primary/15 blur-3xl" />
         <div className="absolute bottom-24 right-12 size-28 rotate-12 rounded-3xl border border-background/15" />

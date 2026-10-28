@@ -24,17 +24,23 @@ export function AIChatWidget({ config }) {
   function toggle(next) {
     setOpen(next);
     if (next) setLoaded(true);
-    else document.getElementById(LAUNCHER_ID)?.focus();
   }
 
-  // Escape se chat band ho (keyboard users ke liye). Hooks early return se pehle hain.
   useEffect(() => {
-    if (!open || hidden) return;
-    function onKeyDown(event) {
-      if (event.key === "Escape") toggle(false);
+    if (!open && loaded && !hidden) {
+      document.getElementById(LAUNCHER_ID)?.focus();
     }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, loaded, hidden]);
+
+  useEffect(() => {
+    const isOpen = open && !hidden;
+    document.documentElement.dataset.chatOpen = String(isOpen);
+    window.dispatchEvent(new Event("chat-open-change"));
+
+    return () => {
+      delete document.documentElement.dataset.chatOpen;
+      window.dispatchEvent(new Event("chat-open-change"));
+    };
   }, [open, hidden]);
 
   if (hidden) return null;
@@ -58,9 +64,19 @@ export function AIChatWidget({ config }) {
         size="lg"
         aria-expanded={open}
         aria-controls={loaded ? "ai-chat-panel" : undefined}
+        aria-hidden={open}
+        tabIndex={open ? -1 : undefined}
         onClick={() => toggle(!open)}
-        className="group fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 h-12 gap-2.5 rounded-full px-5 text-sm font-medium shadow-lg shadow-primary/25 ring-1 ring-primary/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:right-6 sm:bottom-6"
+        className={`group fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 h-12 gap-2.5 rounded-full px-5 text-sm font-medium shadow-lg shadow-primary/25 ring-1 ring-primary/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:right-6 sm:bottom-6 ${
+          open ? "pointer-events-none opacity-0" : ""
+        }`}
       >
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute -inset-1 rounded-full border border-primary/50 motion-safe:animate-ping motion-reduce:animate-none ${
+            open ? "hidden" : ""
+          }`}
+        />
         <span
           className="relative grid size-5 place-items-center"
           aria-hidden="true"

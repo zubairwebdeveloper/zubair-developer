@@ -4,6 +4,13 @@ import { useEffect, useId, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+
 /**
  * AuthCard
  *
@@ -27,17 +34,19 @@ export function AuthCard({
   }, [autoFocusHeading]);
 
   return (
-    <motion.section
-      aria-labelledby={headingId}
+    <motion.div
       initial={reduce ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduce ? 0 : 0.4, ease: "easeOut" }}
-      className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-black/[0.04] dark:shadow-black/30 sm:rounded-3xl"
+      className="w-full max-w-md"
     >
-      <div aria-hidden="true" className="h-1 w-full bg-primary" />
-
-      <div className="p-6 sm:p-9">
-        <header className="mb-7 flex flex-col gap-2.5">
+      <Card
+        role="region"
+        aria-labelledby={headingId}
+        className="relative overflow-hidden rounded-2xl bg-card shadow-xl shadow-black/[0.04] dark:shadow-black/30 sm:rounded-3xl"
+      >
+        <div aria-hidden="true" className="h-1 w-full bg-primary" />
+        <CardHeader className="gap-2.5 px-6 pt-6 sm:px-9 sm:pt-9">
           <h1
             id={headingId}
             ref={headingRef}
@@ -51,17 +60,17 @@ export function AuthCard({
               {description}
             </p>
           ) : null}
-        </header>
-
-        {children}
-
+        </CardHeader>
+        <CardContent className="gap-0 px-6 pb-6 sm:px-9 sm:pb-9">
+          {children}
+        </CardContent>
         {footer ? (
-          <div className="mt-7 border-t border-border pt-5 text-center text-sm leading-6 text-muted-foreground">
+          <CardFooter className="justify-center border-t border-border pt-5 text-center text-sm leading-6 text-muted-foreground">
             {footer}
-          </div>
+          </CardFooter>
         ) : null}
-      </div>
-    </motion.section>
+      </Card>
+    </motion.div>
   );
 }
 

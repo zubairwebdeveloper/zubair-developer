@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Check, Link2, Share2 } from "lucide-react";
 
 const buttonClass =
@@ -8,14 +8,14 @@ const buttonClass =
 
 export function ShareButtons({ title }) {
   const [status, setStatus] = useState("idle"); // idle | copied | error
-  const [canShare, setCanShare] = useState(false);
   const timer = useRef(null);
+  const canShare = useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator.share === "function",
+    () => false,
+  );
 
-  // Hydration-safe: browser support client par check hota hai
-  useEffect(() => {
-    setCanShare(typeof navigator.share === "function");
-    return () => clearTimeout(timer.current);
-  }, []);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   function flash(next) {
     setStatus(next);

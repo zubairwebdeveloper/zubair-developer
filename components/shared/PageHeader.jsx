@@ -106,6 +106,15 @@ export function PageHeader({
         className,
       )}
     >
+      {/* Subtle grid background */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-grid-subtle opacity-30"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-noise opacity-25"
+      />
       {/* Soft brand glow, uses theme tokens so it follows light and dark mode */}
       <div
         aria-hidden="true"

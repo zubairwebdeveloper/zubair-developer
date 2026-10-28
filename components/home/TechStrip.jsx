@@ -1,11 +1,10 @@
-// components/home/TechStrip.jsx
 import { Container } from "@/components/shared/Container";
-import { getTechStack } from "@/services/content.service";
+import { techStack } from "@/lib/data/tech";
 
 export async function TechStrip() {
-  const stack = await getTechStack();
+  const stack = Array.isArray(techStack) ? techStack : [];
 
-  if (!Array.isArray(stack) || stack.length === 0) return null;
+  if (stack.length === 0) return null;
 
   return (
     <section
@@ -30,7 +29,7 @@ export async function TechStrip() {
             className="hidden h-6 w-px shrink-0 bg-border lg:block"
           />
 
-          <ul className="flex flex-wrap gap-2 sm:gap-2.5">
+          <ul className="flex flex-wrap gap-2 sm:gap-2.5" aria-label="Tech stack">
             {stack.map((tech) => {
               const name = typeof tech === "string" ? tech : tech?.name;
               if (!name) return null;

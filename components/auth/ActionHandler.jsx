@@ -301,10 +301,7 @@ export function ActionHandler({ mode, code }) {
   const startedFor = useRef(null);
 
   useEffect(() => {
-    if (!supported) {
-      setState({ status: "error", message: incompleteMessage });
-      return;
-    }
+    if (!supported) return;
 
     // Run once per link. A different link on the same page starts over.
     const key = `${mode}:${code}`;
@@ -329,14 +326,18 @@ export function ActionHandler({ mode, code }) {
     run();
   }, [supported, mode, code, incompleteMessage]);
 
-  switch (state.status) {
+  const visibleState = supported
+    ? state
+    : { status: "error", message: incompleteMessage };
+
+  switch (visibleState.status) {
     case "checking":
       return <Checking mode={mode} />;
     case "reset":
       return (
         <ResetForm
           code={code}
-          email={state.email}
+          email={visibleState.email}
           onDone={() => setState({ status: "reset-done" })}
         />
       );
@@ -364,6 +365,6 @@ export function ActionHandler({ mode, code }) {
         />
       );
     default:
-      return <Problem message={state.message} mode={mode} />;
+      return <Problem message={visibleState.message} mode={mode} />;
   }
 }

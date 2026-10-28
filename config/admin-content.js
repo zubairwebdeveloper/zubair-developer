@@ -262,7 +262,8 @@ export const CONTENT_CONFIG = {
         type: "textarea",
         rows: 14,
         description:
-          "Paragraphs ke darmiyan khali line chhorein. HTML support nahi.",
+          "Paragraphs ke darmiyan khali line chhorein. " +
+          "## / ### lines section headings aur article contents banati hain. HTML support nahi.",
       },
       { name: "tags", label: "Tags", type: "lines" },
       ...imageFields,

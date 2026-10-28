@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/constants/auth";
 import { COLLECTIONS } from "@/constants/collections";
-import { getAdminRecord } from "@/lib/auth/session";
+import { getAdminRecord, getCurrentAdmin } from "@/lib/auth/session";
+import { hasPermission, PERMISSIONS } from "@/lib/auth/permissions";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { serverTimestamp } from "@/lib/firebase/firestore";
 import {
@@ -21,6 +22,27 @@ const cookieOptions = {
   sameSite: "lax",
   path: "/",
 };
+
+export async function GET() {
+  try {
+    const admin = await getCurrentAdmin();
+    const canAccessDashboard = Boolean(
+      admin && hasPermission(admin.role, PERMISSIONS.DASHBOARD_VIEW),
+    );
+
+    return NextResponse.json(
+      { canAccessDashboard },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  } catch (error) {
+    console.error("[api/admin/session] GET failed:", error);
+    return errorResponse(
+      "SERVER_ERROR",
+      "Could not verify dashboard access.",
+      500,
+    );
+  }
+}
 
 export async function POST(request) {
   if (!isSameOrigin(request)) {

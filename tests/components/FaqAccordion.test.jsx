@@ -38,7 +38,9 @@ describe("FaqAccordion", () => {
       "start a project",
     );
 
-    expect(screen.getByText("How do I start a project?")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "How do I start a project?" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("Are the listed prices final?"),
     ).not.toBeInTheDocument();

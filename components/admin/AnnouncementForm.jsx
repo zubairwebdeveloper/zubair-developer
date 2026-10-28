@@ -97,7 +97,7 @@ function AnnouncementPreview({ enabled, message, href, linkLabel }) {
           Preview
         </h2>
         <span className="text-xs text-muted-foreground">
-          Approximate. Your site's bar may differ slightly.
+          Approximate. Your site&apos;s bar may differ slightly.
         </span>
       </div>
 
@@ -166,7 +166,10 @@ export function AnnouncementForm({ announcement }) {
     name: ["enabled", "message", "href", "linkLabel", "startsAt", "endsAt"],
   });
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   // Warn before leaving the page with unsaved edits.
   useEffect(() => {

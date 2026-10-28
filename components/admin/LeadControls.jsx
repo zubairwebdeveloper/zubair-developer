@@ -60,9 +60,12 @@ export function LeadControls({ lead }) {
   const [priority, setPriority] = useState(lead.priority ?? "medium");
   const [followUp, setFollowUp] = useState(toLocalInput(lead.followUpAt));
   const [saving, setSaving] = useState(false);
-  const [mounted, setMounted] = useState(false); // time-based hints render after mount
+  const [now, setNow] = useState(0);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setNow(Date.now()));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   // Only the current status and its allowed transitions. The server enforces this again.
   const transitions = LEAD_TRANSITIONS[lead.status] ?? [];
@@ -77,10 +80,10 @@ export function LeadControls({ lead }) {
 
   const followUpDate = followUp ? new Date(followUp) : null;
   const isOverdue =
-    mounted &&
+    now > 0 &&
     followUpDate !== null &&
     !Number.isNaN(followUpDate.getTime()) &&
-    followUpDate.getTime() < Date.now();
+    followUpDate.getTime() < now;
 
   async function onSave() {
     const patch = {};

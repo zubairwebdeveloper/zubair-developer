@@ -6,6 +6,7 @@ export const siteConfig = {
     "I help businesses build high-performance websites, scalable web applications, and AI-powered automation systems.",
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+  freeDiscoveryCall: false,
 };
 
 /** Header aur mobile menu. Chhota rakha hai taake header na bhare. */

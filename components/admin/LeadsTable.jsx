@@ -81,9 +81,12 @@ export function LeadsTable({ leads, canManage = false }) {
   const [confirming, setConfirming] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("default");
-  const [mounted, setMounted] = useState(false); // time-based flags render after mount
+  const [now, setNow] = useState(0);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setNow(Date.now()));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const rows = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -337,7 +340,7 @@ export function LeadsTable({ leads, canManage = false }) {
               {rows.map((lead) => {
                 const followUpTime = timeOf(lead.followUpAt);
                 const overdue =
-                  mounted && followUpTime !== null && followUpTime < Date.now();
+                  now > 0 && followUpTime !== null && followUpTime < now;
 
                 return (
                   <TableRow

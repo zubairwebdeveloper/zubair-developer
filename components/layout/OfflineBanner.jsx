@@ -58,16 +58,21 @@ export function OfflineBanner() {
 
   // A real connection change resets everything the visitor did to the banner.
   useEffect(() => {
-    setForcedOnline(false);
-    setDismissed(false);
-    setRetryFailed(false);
+    const frame = window.requestAnimationFrame(() => {
+      setForcedOnline(false);
+      setDismissed(false);
+      setRetryFailed(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [online]);
 
   useEffect(() => {
     if (!effectiveOnline) {
       wasOffline.current = true;
-      setJustReconnected(false);
-      return undefined;
+      const frame = window.requestAnimationFrame(() =>
+        setJustReconnected(false),
+      );
+      return () => window.cancelAnimationFrame(frame);
     }
 
     if (wasOffline.current) {

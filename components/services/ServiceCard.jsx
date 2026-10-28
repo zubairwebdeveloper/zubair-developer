@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
 
+import { SpotlightCard } from "@/components/motion/SpotlightCard";
+import { TiltCard } from "@/components/motion/TiltCard";
 import { renderServiceIcon } from "@/components/shared/icons";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -46,13 +48,16 @@ export function ServiceCard({ service }) {
   const detailsHref = `/services/${service.slug}`;
 
   return (
-    <Card
-      className={cn(
-        "group/service relative h-full overflow-hidden transition-[transform,box-shadow,border-color] duration-300 motion-reduce:transition-none",
-        "motion-safe:hover:-translate-y-1 hover:border-foreground/20 hover:shadow-lg",
-        "focus-within:border-foreground/20 focus-within:shadow-lg",
-      )}
-    >
+    <div className="group group/service h-full rounded-2xl bg-gradient-to-br from-border/80 via-border/70 to-border/80 p-px transition-colors duration-300 hover:from-primary/55 hover:via-violet/45 hover:to-brand/30 motion-reduce:transition-none">
+      <TiltCard className="h-full">
+        <SpotlightCard className="h-full rounded-[calc(1rem-1px)] border-0 bg-transparent">
+          <Card
+            className={cn(
+              "relative h-full overflow-hidden border-border/70 transition-[box-shadow,border-color] duration-300 motion-reduce:transition-none",
+              "group-hover/service:border-transparent group-hover/service:shadow-lg",
+              "focus-within:border-primary/30 focus-within:shadow-lg",
+            )}
+          >
       <CardHeader className="gap-3">
         <span
           aria-hidden="true"
@@ -173,6 +178,9 @@ export function ServiceCard({ service }) {
           <span className="sr-only"> for {service.title}</span>
         </Link>
       </CardFooter>
-    </Card>
+          </Card>
+        </SpotlightCard>
+      </TiltCard>
+    </div>
   );
 }

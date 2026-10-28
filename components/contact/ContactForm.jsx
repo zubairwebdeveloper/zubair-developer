@@ -20,6 +20,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -239,7 +240,11 @@ export function ContactForm({ showAside = true }) {
   } = useForm({ resolver: zodResolver(contactSchema), defaultValues });
 
   const message = useWatch({ control, name: "message" }) ?? "";
-  const contactEmail = siteConfig?.contact?.email ?? siteConfig?.email ?? null;
+  const contactEmail =
+    siteConfig?.contactEmail ??
+    siteConfig?.contact?.email ??
+    siteConfig?.email ??
+    null;
 
   // Warn before leaving with a half-written message.
   useEffect(() => {
@@ -302,15 +307,23 @@ export function ContactForm({ showAside = true }) {
 
   if (submitted) {
     return (
-      <FormSuccess
-        title="Thank you, your message was received."
-        description="I will get back to you as soon as possible."
-        reference={reference}
-      >
-        <Button type="button" variant="outline" onClick={sendAnother}>
-          Send another message
-        </Button>
-      </FormSuccess>
+      <Card className="gap-0 rounded-2xl border-border/60 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-card-title">Message received</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FormSuccess
+            title="Thank you, your message was received."
+            description="I will review it and reply to the email address you provided."
+            reference={reference}
+          />
+        </CardContent>
+        <CardFooter className="border-t border-border/70 pt-5">
+          <Button type="button" variant="outline" onClick={sendAnother}>
+            Send another message
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
 
@@ -326,14 +339,14 @@ export function ContactForm({ showAside = true }) {
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        <form
-          onSubmit={handleSubmit(onSubmit, onInvalid)}
-          onKeyDown={onKeyDown}
-          noValidate
-          aria-busy={isSubmitting}
-          className="relative"
-        >
+      <form
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        onKeyDown={onKeyDown}
+        noValidate
+        aria-busy={isSubmitting}
+        className="relative"
+      >
+        <CardContent>
           <FieldGroup>
             <div className="grid gap-5 sm:grid-cols-2">
               <TextField
@@ -379,46 +392,46 @@ export function ContactForm({ showAside = true }) {
               label="I agree that my details may be used to respond to this enquiry."
             />
             <HoneypotField register={register} />
-
-            <div ref={errorRef}>
-              <FormError message={submitError} />
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubmitting}
-                className="w-full transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0 sm:w-auto"
-              >
-                {isSubmitting ? (
-                  <Loader2
-                    aria-hidden="true"
-                    className="animate-spin motion-reduce:animate-none"
-                  />
-                ) : (
-                  <Send aria-hidden="true" />
-                )}
-                {isSubmitting ? "Sending…" : "Send message"}
-              </Button>
-
-              <p className="text-xs leading-5 text-muted-foreground sm:max-w-[16rem] sm:text-right">
-                Your details are only used to reply to you. See the{" "}
-                <Link
-                  href="/privacy"
-                  className={cn(
-                    "rounded-sm font-medium text-foreground underline underline-offset-4 hover:text-primary",
-                    focusRing,
-                  )}
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </p>
-            </div>
           </FieldGroup>
-        </form>
-      </CardContent>
+        </CardContent>
+        <CardFooter className="flex-col items-stretch gap-4 border-t border-border/70 pt-5">
+          <div ref={errorRef}>
+            <FormError message={submitError} />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+              className="w-full transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0 sm:w-auto"
+            >
+              {isSubmitting ? (
+                <Loader2
+                  aria-hidden="true"
+                  className="animate-spin motion-reduce:animate-none"
+                />
+              ) : (
+                <Send aria-hidden="true" />
+              )}
+              {isSubmitting ? "Sending…" : "Send message"}
+            </Button>
+
+            <p className="text-xs leading-5 text-muted-foreground sm:max-w-[16rem] sm:text-right">
+              Your details are only used to reply to you. See the{" "}
+              <Link
+                href="/privacy"
+                className={cn(
+                  "rounded-sm font-medium text-foreground underline underline-offset-4 hover:text-primary",
+                  focusRing,
+                )}
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          </div>
+        </CardFooter>
+      </form>
     </Card>
   );
 

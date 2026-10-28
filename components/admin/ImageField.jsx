@@ -102,7 +102,9 @@ export function ImageField({ control, name, label, description }) {
                 id={`${name}-choose`}
                 type="button"
                 onClick={() => setOpen(true)}
-                aria-invalid={fieldState.invalid || undefined}
+                aria-describedby={
+                  fieldState.invalid ? `${name}-error` : undefined
+                }
                 className={cn(
                   "flex aspect-video w-full max-w-sm flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/30 p-4 text-center transition-colors motion-reduce:transition-none",
                   "hover:border-primary/50 hover:bg-primary/5",
@@ -161,7 +163,10 @@ export function ImageField({ control, name, label, description }) {
               <FieldDescription>{description}</FieldDescription>
             ) : null}
             {fieldState.invalid ? (
-              <FieldError errors={[fieldState.error]} />
+              <FieldError
+                id={fieldState.error ? `${name}-error` : undefined}
+                errors={[fieldState.error]}
+              />
             ) : null}
 
             <Dialog open={open} onOpenChange={setOpen}>

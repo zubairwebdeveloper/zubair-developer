@@ -214,6 +214,7 @@ export default async function RootLayout({ children }) {
   const settings = await getSettings();
   const { siteName, description } = resolveBrand(settings);
   const aiChatConfig = resolveAiChatConfig(settings);
+  const announcement = settings?.announcement;
 
   const sameAs = Object.values(settings?.social ?? {}).filter(
     (value) => typeof value === "string" && value.trim(),
@@ -264,42 +265,69 @@ export default async function RootLayout({ children }) {
         <link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
       </head>
       <body className="relative flex min-h-dvh flex-col overflow-x-clip bg-background font-sans text-[15px] leading-relaxed text-foreground antialiased selection:bg-primary/20 selection:text-foreground sm:text-base lg:text-[17px] dark:selection:bg-primary/30">
-        {/* Lets keyboard and screen reader users skip the navigation. */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[10000] focus:rounded-lg focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Skip to main content
-        </a>
-        <ThemeProvider>
-          {/* <Providers> */}
-          {/* <AuthProvider> */}
-          <ScrollProgress />
-          <SiteBackground />
-          <SiteHeader />
-          <main
-            id="main-content"
-            tabIndex={-1}
-            className="flex-1 outline-none motion-safe:animate-fade-in"
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-20 overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_34%,transparent_68%,rgba(12,18,32,0.08))] dark:bg-[linear-gradient(to_bottom,rgba(8,12,24,0.22),transparent_38%,transparent_65%,rgba(6,8,15,0.18))]" />
+          <div
+            className="absolute -left-20 top-0 h-[26rem] w-[26rem] rounded-full opacity-55 blur-3xl animate-pulse"
+            style={{
+              background:
+                "radial-gradient(circle, color-mix(in srgb, var(--primary) 38%, transparent), transparent 68%)",
+            }}
+          />
+          <div
+            className="absolute right-[-8rem] top-[12rem] h-[24rem] w-[24rem] rounded-full opacity-40 blur-3xl animate-pulse"
+            style={{
+              background:
+                "radial-gradient(circle, color-mix(in srgb, var(--violet) 44%, transparent), transparent 70%)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 left-[18%] h-[20rem] w-[20rem] rounded-full opacity-30 blur-3xl animate-pulse"
+            style={{
+              background:
+                "radial-gradient(circle, color-mix(in srgb, var(--brand) 26%, transparent), transparent 74%)",
+            }}
+          />
+        </div>
+
+        <div className="relative flex min-h-dvh flex-col">
+          {/* Lets keyboard and screen reader users skip the navigation. */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[10000] focus:rounded-lg focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {children}
-          </main>
-          <SiteFooter />
+            Skip to main content
+          </a>
+          <ThemeProvider>
+            {/* <Providers> */}
+            {/* <AuthProvider> */}
+            <ScrollProgress />
+            <SiteBackground />
+            <SiteHeader announcement={announcement} />
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className="flex-1 outline-none motion-safe:animate-fade-in"
+            >
+              {children}
+            </main>
+            <SiteFooter />
 
-          {/* AIChatWidget hides itself on /contact and /hire-me, and renders
-              nothing without a config — it positions itself with its own
-              fixed classes, so no className is needed here. */}
-          <AIChatWidget config={aiChatConfig} />
+            {/* AIChatWidget hides itself on /contact and /hire-me, and renders
+                nothing without a config — it positions itself with its own
+                fixed classes, so no className is needed here. */}
+            <AIChatWidget config={aiChatConfig} />
 
-          <ScrollToTop bottom={85} />
+            <ScrollToTop bottom={80} />
 
-          <CommandPalette />
-          <OfflineBanner />
-          <Toaster richColors closeButton position="top-right" />
-          {/* </AuthProvider> */}
-          {/* </Providers> */}
-          <SnakeScrollAuto />
-        </ThemeProvider>
+            <CommandPalette />
+            <OfflineBanner />
+            <Toaster richColors closeButton position="top-right" />
+            {/* </AuthProvider> */}
+            {/* </Providers> */}
+            <SnakeScrollAuto />
+          </ThemeProvider>
+        </div>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

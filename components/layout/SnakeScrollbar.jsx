@@ -11,7 +11,7 @@
    - Drawn on a <canvas> with its own animation loop, so scrolling never re-renders React.
    - The loop stops after 2.5 s of inactivity, and reduced-motion users get a calm, static snake. */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -150,6 +150,7 @@ function SnakeTrack({
   className,
   onMeasure,
   colors,
+  controlsId = "main-content",
   markerSelector = null,
   refreshKey,
 }) {
@@ -161,8 +162,12 @@ function SnakeTrack({
   const refreshRef = useRef(null);
   const onMeasureRef = useRef(onMeasure);
   const paletteRef = useRef(null);
-  onMeasureRef.current = onMeasure;
-  paletteRef.current = parsePalette(colors);
+  const palette = useMemo(() => parsePalette(colors), [colors]);
+
+  useEffect(() => {
+    onMeasureRef.current = onMeasure;
+    paletteRef.current = palette;
+  }, [onMeasure, palette]);
 
   const showBubble = !mini && !horizontal;
 
@@ -660,6 +665,7 @@ function SnakeTrack({
     <div
       ref={wrapRef}
       role="scrollbar"
+      aria-controls={controlsId}
       aria-orientation={horizontal ? "horizontal" : "vertical"}
       aria-label={label}
       aria-valuemin={0}
@@ -680,7 +686,7 @@ function SnakeTrack({
         aria-hidden="true"
         className="block size-full"
         style={{
-          filter: `drop-shadow(0 0 6px ${mix(paletteRef.current, 0, 0.35)})`,
+          filter: `drop-shadow(0 0 6px ${mix(palette, 0, 0.35)})`,
         }}
       />
 
@@ -755,10 +761,12 @@ export function SnakeScrollArea({
 }) {
   const scrollRef = useRef(null);
   const innerRef = useRef(null);
+  const controlsId = useId();
 
   return (
     <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
       <div
+        id={controlsId}
         ref={scrollRef}
         className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
@@ -769,6 +777,7 @@ export function SnakeScrollArea({
       <SnakeTrack
         mini
         label={label}
+        controlsId={controlsId}
         colors={colors}
         getScroller={() => elementScroller(scrollRef.current)}
         className={cn("absolute inset-y-2 right-0.5 w-[14px]", trackClassName)}
@@ -802,7 +811,7 @@ const SKIP_TAGS = new Set([
 
 let autoId = 0;
 
-function AutoSnake({ el, axis, both, colors }) {
+function AutoSnake({ el, axis, both, colors, controlsId }) {
   const boxRef = useRef(null);
   const scheduleRef = useRef(null);
   const horizontal = axis === "x";
@@ -811,7 +820,6 @@ function AutoSnake({ el, axis, both, colors }) {
     const box = boxRef.current;
     if (!box) return;
 
-    const attr = horizontal ? "data-snake-x" : "data-snake-y";
     let raf = 0;
     let on = false;
     box.style.zIndex = el.closest(POPUP_SELECTOR) ? "60" : "45";
@@ -820,8 +828,7 @@ function AutoSnake({ el, axis, both, colors }) {
     const setOn = (v) => {
       if (v === on) return;
       on = v;
-      if (v) el.setAttribute(attr, "");
-      else el.removeAttribute(attr);
+      box.dataset.active = v ? "true" : "false";
     };
 
     const place = () => {
@@ -921,6 +928,7 @@ function AutoSnake({ el, axis, both, colors }) {
       <SnakeTrack
         mini
         horizontal={horizontal}
+        controlsId={controlsId}
         label={horizontal ? "Horizontal scroll" : "Scrollable area"}
         colors={colors}
         getScroller={() => elementScroller(el, axis)}
@@ -948,7 +956,7 @@ export function SnakeScrollAuto({
   const ids = useRef(new WeakMap());
 
   useEffect(() => {
-    setMounted(true);
+    const mountedFrame = window.requestAnimationFrame(() => setMounted(true));
     let timer = 0;
 
     const scan = () => {
@@ -980,9 +988,12 @@ export function SnakeScrollAuto({
           id = ++autoId;
           ids.current.set(el, id);
         }
+        const controlsId = `snake-scroll-${id}`;
         const both = scrollY && scrollX;
-        if (scrollY) found.push({ key: `${id}y`, el, axis: "y", both });
-        if (scrollX) found.push({ key: `${id}x`, el, axis: "x", both });
+        if (scrollY)
+            found.push({ key: `${id}y`, el, axis: "y", both, controlsId: `snake-scroll-${id}` });
+        if (scrollX)
+            found.push({ key: `${id}x`, el, axis: "x", both, controlsId: `snake-scroll-${id}` });
       }
 
       setItems((prev) =>
@@ -996,7 +1007,7 @@ export function SnakeScrollAuto({
       if (!timer) timer = window.setTimeout(scan, 120);
     };
 
-    scan();
+    const scanFrame = window.requestAnimationFrame(scan);
     const mo = new MutationObserver(queue);
     mo.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", queue);
@@ -1007,6 +1018,8 @@ export function SnakeScrollAuto({
       window.removeEventListener("resize", queue);
       window.clearInterval(interval);
       window.clearTimeout(timer);
+      window.cancelAnimationFrame(mountedFrame);
+      window.cancelAnimationFrame(scanFrame);
     };
   }, [max]);
 
@@ -1023,6 +1036,7 @@ export function SnakeScrollAuto({
               axis={it.axis}
               both={it.both}
               colors={colors}
+              controlsId={it.controlsId}
             />
           )),
           document.body,
