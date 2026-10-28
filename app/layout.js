@@ -269,7 +269,7 @@ export default async function RootLayout({ children }) {
         <link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
         <meta
           name="google-site-verification"
-          content="bxA3Yq58I9_uS4gB0vEdvm5_fTEICdXWg57TeRNnUQw"
+          content="googleea8406c0b5f9e455.html"
         />
         <script
           async
