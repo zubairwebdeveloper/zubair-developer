@@ -192,8 +192,6 @@ export function SiteHeader({
     siteConfig.email ??
     null;
 
-  const initial = (siteConfig.name || "Z").trim().charAt(0).toUpperCase();
-
   /* ── Announcement bar ───────────────────────────────────────────── */
   useEffect(() => {
     const banner = announcementMessage || (availability ? { message: availability } : null);
@@ -476,19 +474,17 @@ export function SiteHeader({
             href="/"
             onClick={handleLogoClick}
             className={cn(
-              "group inline-flex min-w-0 items-center gap-2.5 rounded-md font-heading text-base font-semibold tracking-tight sm:text-lg",
+              "group inline-flex min-w-0 items-center gap-2.5 rounded-md font-heading text-base font-semibold tracking-tight text-foreground transition-colors duration-200 motion-safe:group-hover:text-foreground sm:text-lg",
               FOCUS,
             )}
           >
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-transform duration-200 motion-safe:group-hover:scale-105"
+              className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-primary-foreground shadow-sm ring-1 ring-inset ring-primary/20 transition-all duration-200 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:scale-[1.04]"
             >
-              {initial}
+             Z
             </span>
-            <span className="hidden truncate min-[380px]:inline">
-              {siteConfig.name}
-            </span>
+            <span className="truncate min-[380px]:inline">{siteConfig.name}</span>
           </Link>
 
           {/* Desktop nav */}

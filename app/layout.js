@@ -93,19 +93,7 @@ function resolveAiChatConfig(settings) {
   };
 }
 
-/** A valid absolute origin, even if the environment variable is missing or malformed. */
-function resolveSiteUrl() {
-  try {
-    return new URL(
-      process.env.NEXT_PUBLIC_SITE_URL ||
-        "https://zubair-developer.vercel.app/",
-    ).origin;
-  } catch {
-    return "https://zubair-developer.vercel.app/";
-  }
-}
-
-const siteUrl = resolveSiteUrl();
+const siteUrl = siteConfig.url;
 
 /** One settings request per render, shared by metadata and the layout. A failure falls back to defaults. */
 const getSettings = cache(async () => {
@@ -257,6 +245,7 @@ export default async function RootLayout({ children }) {
     <html
       lang="en"
       className="scroll-smooth motion-reduce:scroll-auto"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>

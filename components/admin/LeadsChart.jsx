@@ -188,7 +188,7 @@ export function LeadsChart({ data }) {
   };
 
   return (
-    <figure className="flex flex-col gap-4">
+    <figure className="flex min-w-0 flex-col gap-4">
       {/* Summary stats */}
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
@@ -259,9 +259,10 @@ export function LeadsChart({ data }) {
       <div
         role="img"
         aria-label={`${mode === "daily" ? "Bar chart of new leads per day" : "Area chart of the running total of leads"}. ${summary}`}
-        className="h-64 w-full sm:h-72"
+        className="relative w-full min-w-0"
+        style={{ width: "100%", height: "16rem", minHeight: "16rem" }}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={0}>
           {mode === "daily" ? (
             <BarChart
               data={points}

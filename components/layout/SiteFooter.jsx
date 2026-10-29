@@ -310,23 +310,25 @@ export async function SiteFooter() {
         <div className="flex max-w-sm flex-col items-start gap-5 sm:col-span-2 lg:col-span-1">
           <Link
             href="/"
-            className="inline-flex items-center gap-2.5 rounded-sm font-heading text-xl font-bold tracking-tight text-foreground transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className={cn(
+              "group inline-flex min-w-0 items-center gap-2.5 rounded-md font-heading text-base font-semibold tracking-tight text-foreground transition-colors duration-200 motion-safe:group-hover:text-foreground sm:text-lg",
+            )}
           >
             <span
               aria-hidden="true"
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-inset ring-primary/20"
+              className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-primary-foreground shadow-sm ring-1 ring-inset ring-primary/20 transition-all duration-200 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:scale-[1.04]"
             >
-              <span className="size-2 rounded-full bg-primary" />
+              Z
             </span>
-            {siteConfig.name}
-          </Link>
-
+            <span className="truncate min-[380px]:inline">
+              {siteConfig.name}
+            </span>
+          </Link>{" "}
           {tagline ? (
             <p className="text-sm font-medium leading-6 text-foreground/90">
               {tagline}
             </p>
           ) : null}
-
           {bio ? (
             <div className="flex flex-col items-start gap-1">
               <p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-muted-foreground">
@@ -339,7 +341,6 @@ export async function SiteFooter() {
               />
             </div>
           ) : null}
-
           <ul aria-label="Areas of expertise" className="flex flex-wrap gap-2">
             {POSITIONING.map((item) => (
               <li
@@ -350,7 +351,6 @@ export async function SiteFooter() {
               </li>
             ))}
           </ul>
-
           {email ? (
             <div className="flex items-center gap-2 text-sm">
               <Mail
@@ -364,7 +364,6 @@ export async function SiteFooter() {
               />
             </div>
           ) : null}
-
           {socials ? <SocialRow socials={socials} /> : null}
         </div>
 

@@ -6,10 +6,10 @@ export default defineConfig({
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
-  use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
+  use: { baseURL: "https://zubair-developer.vercel.app", trace: "retain-on-failure" },
   webServer: {
     command: "npm run build && npm run start",
-    url: "http://localhost:3000",
+    url: "https://zubair-developer.vercel.app",
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,
   },

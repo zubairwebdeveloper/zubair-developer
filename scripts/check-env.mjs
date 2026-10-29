@@ -1,5 +1,4 @@
 const required = [
-  "NEXT_PUBLIC_APP_URL",
   "NEXT_PUBLIC_FIREBASE_API_KEY",
   "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
   "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
@@ -10,6 +9,10 @@ const required = [
   "FIREBASE_ADMIN_CLIENT_EMAIL",
   "FIREBASE_ADMIN_PRIVATE_KEY",
 ];
+
+const isSet = (name) => Boolean(process.env[name]?.trim());
+const preferredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
+const siteConfigValid = isSet("NEXT_PUBLIC_SITE_URL") || isSet("NEXT_PUBLIC_APP_URL");
 
 const optional = [
   ["GEMINI_API_KEY", "AI assistant"],
@@ -23,7 +26,6 @@ const optional = [
   ["NEXT_PUBLIC_CONTACT_EMAIL", "Footer/contact page email"],
 ];
 
-const isSet = (name) => Boolean(process.env[name]?.trim());
 let failed = false;
 
 console.log("Required");
@@ -33,6 +35,10 @@ for (const name of required) {
   console.log(`  ${ok ? "OK     " : "MISSING"} ${name}`);
 }
 
+const siteOk = siteConfigValid;
+if (!siteOk) failed = true;
+console.log(`  ${siteOk ? "OK     " : "MISSING"} NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_APP_URL`);
+
 console.log("\nOptional");
 for (const [name, feature] of optional) {
   console.log(`  ${isSet(name) ? "set    " : "not set"} ${name}  (${feature})`);
@@ -40,9 +46,9 @@ for (const [name, feature] of optional) {
 
 console.log("\nWarnings");
 const warnings = [];
-if (process.env.NEXT_PUBLIC_APP_URL?.includes("localhost")) {
+if (preferredSiteUrl?.includes("localhost")) {
   warnings.push(
-    "NEXT_PUBLIC_APP_URL localhost hai. Production ma asli domain dein (sitemap, canonical).",
+    "NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_APP_URL localhost par set hai. Production ma asli domain dain (sitemap, canonical).",
   );
 }
 const key = process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? "";

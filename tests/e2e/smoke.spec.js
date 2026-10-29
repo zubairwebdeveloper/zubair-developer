@@ -77,7 +77,7 @@ test("draft-only routes and private files are not exposed", async ({
 
   const unauthenticated = await request.post("/api/admin/team", {
     data: {},
-    headers: { origin: "http://localhost:3000" },
+    headers: { origin: "https://zubair-developer.vercel.app" },
   });
   expect([401, 403]).toContain(unauthenticated.status());
 });

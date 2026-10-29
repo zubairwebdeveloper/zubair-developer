@@ -18,19 +18,34 @@ export default async function sitemap() {
     "/privacy",
     "/terms",
   ];
+
   const [services, projects, posts] = await Promise.all([
     getServices(),
     getPublishedProjects(),
     getPosts(),
   ]);
 
-  return [
-    ...staticRoutes.map((path) => ({ url: `${siteConfig.url}${path}` })),
-    ...services.map((s) => ({ url: `${siteConfig.url}/services/${s.slug}` })),
-    ...projects.map((p) => ({ url: `${siteConfig.url}/projects/${p.slug}` })),
-    ...posts.map((p) => ({
-      url: `${siteConfig.url}/blog/${p.slug}`,
-      lastModified: p.publishedAt,
+  const entries = [
+    ...staticRoutes.map((path) => ({
+      url: new URL(path || "/", siteConfig.url).toString(),
     })),
+    ...services
+      .filter((service) => service?.slug)
+      .map((service) => ({
+        url: new URL(`/services/${service.slug}`, siteConfig.url).toString(),
+      })),
+    ...projects
+      .filter((project) => project?.slug)
+      .map((project) => ({
+        url: new URL(`/projects/${project.slug}`, siteConfig.url).toString(),
+      })),
+    ...posts
+      .filter((post) => post?.slug)
+      .map((post) => ({
+        url: new URL(`/blog/${post.slug}`, siteConfig.url).toString(),
+        ...(post.publishedAt ? { lastModified: new Date(post.publishedAt) } : {}),
+      })),
   ];
+
+  return [...new Map(entries.map((entry) => [entry.url, entry])).values()];
 }
